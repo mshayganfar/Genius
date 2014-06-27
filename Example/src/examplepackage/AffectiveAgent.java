@@ -40,6 +40,9 @@ public class AffectiveAgent extends Agent
 	private Action opponentLastAction = null;
 	private Action selfLastAction  = null;
 	
+	private List<Double> opponentEntropyHistory;
+	
+	private List<ArrayList<String>> opponentBidHistory;
 	private Bid opponentLastBid = null;
 	private Bid selfLastBid     = null;
 	
@@ -72,6 +75,8 @@ public class AffectiveAgent extends Agent
 	 */
 	public void init()
 	{
+		opponentBidHistory = new ArrayList<ArrayList<String>>();
+		
 		MINIMUM_BID_UTILITY = utilitySpace.getReservationValueUndiscounted();
 		
 		String agentID = readAgentID();
@@ -131,31 +136,10 @@ public class AffectiveAgent extends Agent
 		}
 	}
 	
-	public Double calculateShannonEntropy(List<String> values) {
-		HashMap<String, Integer> map = new HashMap<String, Integer>();
-		
-		// count the occurrences of each value
-		for (String sequence : values) {
-			if (!map.containsKey(sequence)) {
-				map.put(sequence, 0);
-		    }
-		    map.put(sequence, map.get(sequence) + 1);
-		}
-		 
-		// calculate the entropy
-		Double result = 0.0;
-		for (String sequence : map.keySet()) {
-			Double frequency = (double) map.get(sequence) / values.size();
-			result -= frequency * (Math.log(frequency) / Math.log(2));
-		}
-		 
-		return result;
-	}
-	
 	private double getFairUtilityOnPareto(BidSpace bidSpace) throws Exception {
 		
 		HashMap<Integer, Value> values = new HashMap<Integer, Value>();
-		ArrayList<Issue> issues=utilitySpace.getDomain().getIssues();
+		ArrayList<Issue> issues = utilitySpace.getDomain().getIssues();
 		
 		for(Issue lIssue:issues) 
 			values.put(lIssue.getNumber(), ((IssueDiscrete)lIssue).getValue(lIssue.getNumber()-1));
@@ -216,14 +200,59 @@ public class AffectiveAgent extends Agent
 		if (opponentAction instanceof Offer)
 		{
 			try { 
+				
 				System.out.println("Affective Agent >>> Opponent's Bid: " + ((Offer)opponentAction).getBid());
 				System.out.println("Affective Agent >>> Utility of Opponent's Bid: " + utilitySpace.getUtility(((Offer)opponentAction).getBid()));
 				
 				opponentLastBid = ((Offer)opponentAction).getBid();
+				addOpponentLastBidToHistory(opponentLastBid);
+				
 			} catch(Exception e) {
 				e.printStackTrace();
 			}
 		}
+	}
+	
+	private void addOpponentLastBidToHistory(Bid opponentLastBid) throws Exception {
+		
+		ArrayList<String> tempBidList = new ArrayList<String>();
+		
+		for (int i = 1 ; i <= opponentLastBid.getIssues().size() ; i++)
+		{
+			tempBidList.add(opponentLastBid.getValue(i).toString());
+		}
+		
+		opponentBidHistory.add(tempBidList);
+	}
+	
+	public Double calculateShannonEntropy(/*List<String> values*/) {
+		
+		int counter = 0;
+		
+		HashMap<String, Integer> map = new HashMap<String, Integer>();
+		
+		for (int i = 0 ; i < opponentBidHistory.size() ; i++)
+		{
+			for (String sequence : /*values*/ opponentBidHistory.get(i)) {
+				if (!map.containsKey(sequence)) {
+					map.put(sequence, 0);
+			    }
+			    map.put(sequence, map.get(sequence) + 1);
+			    counter++;
+			}
+		}
+		
+		Double result = 0.0;
+		if (counter != 0) {
+			for (String sequence : map.keySet()) {
+				Double frequency = (double) map.get(sequence) / counter; // values.size()
+				result -= frequency * (Math.log(frequency) / Math.log(2));
+			}
+		}
+		
+		opponentEntropyHistory.add(result);
+		
+		return result;
 	}
 
 	private Bid getNextBid(Bid pOppntBid) throws Exception {
