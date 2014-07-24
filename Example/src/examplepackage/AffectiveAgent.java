@@ -33,9 +33,9 @@ import negotiator.issue.ValueReal;
 public class AffectiveAgent extends Agent
 {
 	private enum Emotions {HAPPY, SAD};
-	private enum AgentLabel {A, B};
-	private enum EvaluationType {BATNA, FAIR, MAX};
-	private enum NegotiationType {Distributive, Integrative};
+	public enum AgentLabel {A, B};
+	public enum NegotiationType {Distributive, Integrative};
+	public enum EvaluationType {BATNA, FAIR, MAX};
 	
 	private Action opponentLastAction = null;
 	private Action selfLastAction  = null;
@@ -43,6 +43,9 @@ public class AffectiveAgent extends Agent
 	private List<Double> opponentEntropyHistory;
 	
 	private List<ArrayList<String>> opponentBidHistory;
+	private ArrayList<Integer> acceptedOffersCount = new ArrayList<Integer>();
+	private ArrayList<Integer> totalOffersCount    = new ArrayList<Integer>();
+	
 	private Bid opponentLastBid = null;
 	private Bid selfLastBid     = null;
 	
@@ -61,9 +64,9 @@ public class AffectiveAgent extends Agent
 	private int nLamps;
 	private int nPaintings;
 	
-	private final int max_nRecords = 3;
-	private final int max_nLamps = 2;
-	private final int max_nPaintings = 1;
+	public final int max_nRecords = 3;
+	public final int max_nLamps = 2;
+	public final int max_nPaintings = 1;
 	
 	private final NegotiationType negotiationType = NegotiationType.Distributive;
 	
@@ -342,4 +345,14 @@ public class AffectiveAgent extends Agent
 	}
 
 	double sq(double x) { return x*x; }
+	
+	// These two methods should be implemented for both of the agents!
+	// Also, it should be checked whether it is zero indexed!
+	public int getAcceptedOffersCount(int turnIndex) {
+		return acceptedOffersCount.get(turnIndex);
+	}
+	
+	public int getTotalOffersCount(int turnIndex) {
+		return totalOffersCount.get(turnIndex);
+	}
 }
