@@ -50,8 +50,8 @@ public class AffectiveAgent extends Agent
 	private ArrayList<Integer> totalOffersCountAgentA    = new ArrayList<Integer>();
 	private ArrayList<Integer> totalOffersCountAgentB    = new ArrayList<Integer>();
 	
-	private ArrayList<String> lastOfferAgentA = new ArrayList<String>();
-	private ArrayList<String> lastOfferAgentB = new ArrayList<String>();
+	private Bid lastOfferAgentA = new Bid();
+	private Bid lastOfferAgentB = new Bid();
 	
 	private Bid opponentLastBid = null;
 	private Bid selfLastBid     = null;
@@ -202,7 +202,7 @@ public class AffectiveAgent extends Agent
 	private Action proposeInitialBid() throws Exception {
 		Bid lBid = null;
 		lBid = utilitySpace.getMaxUtilityBid();
-		selfLastBid = lBid;
+		updateSelfLastOffer(lBid);
 		return new Offer(getAgentID(), lBid);
 	}
 	
@@ -229,6 +229,7 @@ public class AffectiveAgent extends Agent
 				opponentLastBid = ((Offer)opponentAction).getBid();
 				addOpponentLastBidToHistory(opponentLastBid);
 				
+				updateOpponentLastOffer(opponentLastBid);
 			} catch(Exception e) {
 				e.printStackTrace();
 			}
@@ -310,6 +311,7 @@ public class AffectiveAgent extends Agent
 //					if (lnextBid == null)
 //						lnextBid = myPreviousBids.get(myPreviousBids.size() - 1);
 					
+					updateSelfLastOffer(lnextBid);
 					action = new Offer(getAgentID(), lnextBid);
 				}
 			}
@@ -386,25 +388,40 @@ public class AffectiveAgent extends Agent
 		
 		int counter = 0;
 		
-		for(int i = 0 ; i < lastOfferAgentA.size() ; i++)
-		{
-			for(int j = 0 ; j < lastOfferAgentB.size() ; j++)
-			{
-				if(lastOfferAgentA.get(i).equals(lastOfferAgentB.get(j)))
-				{
-					if(getAgentLabel() == AgentLabel.A) counter++;
-					else if(getAgentLabel() == AgentLabel.B) counter++;
-				}
-			}
-		}
+		// lastOfferAgentA & lastOfferAgentB should be ArrayList<Bid> when we have partial offers. 
+//		for(int i = 0 ; i < lastOfferAgentA.size() ; i++)
+//		{
+//			for(int j = 0 ; j < lastOfferAgentB.size() ; j++)
+//			{
+//				if(lastOfferAgentA.get(i).equals(lastOfferAgentB.get(j)))
+//				{
+//					if(getAgentLabel() == AgentLabel.A) counter++;
+//					else if(getAgentLabel() == AgentLabel.B) counter++;
+//				}
+//			}
+//		}
 		
+		// Needs some change after talking to Reyhan and figuring out the prefrence profile!
 		if(getAgentLabel() == AgentLabel.A) acceptedOffersCountAgentA.add(counter);
 		else if(getAgentLabel() == AgentLabel.B) acceptedOffersCountAgentB.add(counter);
 	}
 	
 	private void updateTotalOffersCount() {
 		
-		if(getAgentLabel() == AgentLabel.A) totalOffersCountAgentA.add(lastOfferAgentA.size());
-		else if(getAgentLabel() == AgentLabel.B) totalOffersCountAgentB.add(lastOfferAgentB.size());
+		// Same as above!
+//		if(getAgentLabel() == AgentLabel.A) totalOffersCountAgentA.add(lastOfferAgentA.size());
+//		else if(getAgentLabel() == AgentLabel.B) totalOffersCountAgentB.add(lastOfferAgentB.size());
+	}
+	
+	private void updateOpponentLastOffer(Bid opponentLastOffer) {
+		// lastOfferAgentA & lastOfferAgentB should be ArrayList<Bid> when we have partial offers.
+		if(getAgentLabel() == AgentLabel.A) lastOfferAgentB = opponentLastOffer;
+		else if(getAgentLabel() == AgentLabel.B) lastOfferAgentA = opponentLastOffer;
+	}
+	
+	private void updateSelfLastOffer(Bid selfLastOffer) {
+		// lastOfferAgentA & lastOfferAgentB should be ArrayList<Bid> when we have partial offers.
+		if(getAgentLabel() == AgentLabel.A) lastOfferAgentA = selfLastOffer;
+		else if(getAgentLabel() == AgentLabel.B) lastOfferAgentB = selfLastOffer;
 	}
 }

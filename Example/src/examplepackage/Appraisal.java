@@ -13,16 +13,17 @@ public class Appraisal extends AffectiveAgent{
 	private int turnCount    = 0;
 	private long startingTime = 0;
 	private long elapsedTime  = 0;
+	private FairnessType fairnessType = FairnessType.NASH;
 	
 	private enum FairnessType {NASH, KALAI};
 	private enum Intentionality {INTENTIONAL, UNINTENTIONAL};
 	
 	private Intentionality intenStatus = Intentionality.INTENTIONAL;
 	
-	public boolean isDesirable(UtilitySpace utilitySpace, OpponentModel fOpponentModel, Bid opponentLastBid, double opponentUtility, EvaluationType evalType, double threshold) throws Exception {
+	public boolean isDesirable(OpponentModel opponentModel, Bid opponentLastBid, EvaluationType evalType, double threshold) throws Exception {
 		
-		BidSpace bs = new BidSpace(utilitySpace, new OpponentModelUtilSpace(fOpponentModel), false, true);
-		double obtainedUtility = bs.ourUtilityOnPareto(fOpponentModel.getNormalizedUtility(opponentLastBid));
+		BidSpace bs = new BidSpace(utilitySpace, new OpponentModelUtilSpace(opponentModel), false, true);
+		double obtainedUtility = bs.ourUtilityOnPareto(opponentModel.getNormalizedUtility(opponentLastBid));
 
 		switch (evalType)
 		{
@@ -31,7 +32,7 @@ public class Appraisal extends AffectiveAgent{
 			case MAX:
 				if ((getUtility(utilitySpace.getMaxUtilityBid()) - obtainedUtility) < threshold) return true; else return false;
 			case FAIR:
-				if ((obtainedUtility - getFairUtilityOnPareto(bs, FairnessType.NASH)) > threshold) return true; else return false;
+				if ((obtainedUtility - getFairUtilityOnPareto(bs, getFairnessType())) > threshold) return true; else return false;
 			default:
 				System.out.println("Appraisal--Desirability Failed!");
 				return false;
@@ -61,6 +62,11 @@ public class Appraisal extends AffectiveAgent{
 		controllabilityResult = ((double)numerator/(turnCount*Math.pow(getTime(), dValue))) + alphaValue;
 		
 		if (controllabilityResult <= thresholdValue) return false; else return true;
+	}
+	
+	public boolean isControllable(Bid opponentLastBid, double thresholdValue) throws Exception {
+		
+		if((getUtility(utilitySpace.getMaxUtilityBid()) - thresholdValue) < getUtility(opponentLastBid)) return true; else return false;
 	}
 	
 	public boolean isIntentional() {
@@ -98,5 +104,13 @@ public class Appraisal extends AffectiveAgent{
 	
 	public void startClock() {
 		startingTime = System.currentTimeMillis();
+	}
+	
+	private FairnessType getFairnessType() {
+		return fairnessType;
+	}
+	
+	public void setFairnessType(FairnessType fairnessType) {
+		this.fairnessType = fairnessType;
 	}
 }
