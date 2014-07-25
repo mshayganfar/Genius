@@ -43,8 +43,15 @@ public class AffectiveAgent extends Agent
 	private List<Double> opponentEntropyHistory;
 	
 	private List<ArrayList<String>> opponentBidHistory;
-	private ArrayList<Integer> acceptedOffersCount = new ArrayList<Integer>();
-	private ArrayList<Integer> totalOffersCount    = new ArrayList<Integer>();
+	
+	private ArrayList<Integer> acceptedOffersCountAgentA = new ArrayList<Integer>();
+	private ArrayList<Integer> acceptedOffersCountAgentB = new ArrayList<Integer>();
+	
+	private ArrayList<Integer> totalOffersCountAgentA    = new ArrayList<Integer>();
+	private ArrayList<Integer> totalOffersCountAgentB    = new ArrayList<Integer>();
+	
+	private ArrayList<String> lastOfferAgentA = new ArrayList<String>();
+	private ArrayList<String> lastOfferAgentB = new ArrayList<String>();
 	
 	private Bid opponentLastBid = null;
 	private Bid selfLastBid     = null;
@@ -82,7 +89,7 @@ public class AffectiveAgent extends Agent
 		
 		MINIMUM_BID_UTILITY = utilitySpace.getReservationValueUndiscounted();
 		
-		String agentID = readAgentID();
+		String agentID = readAgentLabel();
 		if(!agentID.equals(null)) setAgentID(new AgentID(agentID));
 		
 		System.out.println("Reservation Value Undiscounted: " + MINIMUM_BID_UTILITY);
@@ -103,21 +110,33 @@ public class AffectiveAgent extends Agent
 		
 	}
 
-	private String readAgentID() {
+	private String readAgentLabel() {
 		try {
 			File file = new File("agentid.txt");
 			if (!file.exists()) {
 				file.createNewFile();
+				setAgentLabel(AgentLabel.A);
 				return "A";
 			}
 			else {
-				if(file.delete()) return "B";
+				if(file.delete()) {
+					setAgentLabel(AgentLabel.B);
+					return "B";
+				}
 				else return null;
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		return null;
+	}
+	
+	private void setAgentLabel(AgentLabel agentLabel) {
+		this.agentLabel = agentLabel;
+	}
+	
+	private AgentLabel getAgentLabel() {
+		return agentLabel;
 	}
 	
 	private void prepareOpponentModel() {
@@ -346,13 +365,46 @@ public class AffectiveAgent extends Agent
 
 	double sq(double x) { return x*x; }
 	
-	// These two methods should be implemented for both of the agents!
 	// Also, it should be checked whether it is zero indexed!
 	public int getAcceptedOffersCount(int turnIndex) {
-		return acceptedOffersCount.get(turnIndex);
+		
+		if(getAgentLabel() == AgentLabel.A) return acceptedOffersCountAgentA.get(turnIndex);
+		else if(getAgentLabel() == AgentLabel.B) return acceptedOffersCountAgentB.get(turnIndex);
+		
+		return -1;
 	}
 	
 	public int getTotalOffersCount(int turnIndex) {
-		return totalOffersCount.get(turnIndex);
+		
+		if(getAgentLabel() == AgentLabel.A) return totalOffersCountAgentA.get(turnIndex);
+		else if(getAgentLabel() == AgentLabel.B) return totalOffersCountAgentB.get(turnIndex);
+		
+		return -1;
+	}
+	
+	private void updateAcceptedOffersCount() {
+		
+		int counter = 0;
+		
+		for(int i = 0 ; i < lastOfferAgentA.size() ; i++)
+		{
+			for(int j = 0 ; j < lastOfferAgentB.size() ; j++)
+			{
+				if(lastOfferAgentA.get(i).equals(lastOfferAgentB.get(j)))
+				{
+					if(getAgentLabel() == AgentLabel.A) counter++;
+					else if(getAgentLabel() == AgentLabel.B) counter++;
+				}
+			}
+		}
+		
+		if(getAgentLabel() == AgentLabel.A) acceptedOffersCountAgentA.add(counter);
+		else if(getAgentLabel() == AgentLabel.B) acceptedOffersCountAgentB.add(counter);
+	}
+	
+	private void updateTotalOffersCount() {
+		
+		if(getAgentLabel() == AgentLabel.A) totalOffersCountAgentA.add(lastOfferAgentA.size());
+		else if(getAgentLabel() == AgentLabel.B) totalOffersCountAgentB.add(lastOfferAgentB.size());
 	}
 }
