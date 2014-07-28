@@ -1,7 +1,10 @@
 package examplepackage;
 
+import java.util.List;
+
 import org.jfree.data.function.PowerFunction2D;
 
+import examplepackage.AffectiveAgent.AgentLabel;
 import negotiator.Bid;
 import negotiator.analysis.BidSpace;
 import negotiator.utility.UtilitySpace;
@@ -10,13 +13,13 @@ import agents.bayesianopponentmodel.OpponentModelUtilSpace;
 
 public class Appraisal extends AffectiveAgent{
 	
-	private int turnCount    = 0;
 	private long startingTime = 0;
 	private long elapsedTime  = 0;
 	private FairnessType fairnessType = FairnessType.NASH;
 	
 	private enum FairnessType {NASH, KALAI};
 	private enum Intentionality {INTENTIONAL, UNINTENTIONAL};
+	private enum Time {SECONDS, MINUTES, TURNS};
 	
 	private Intentionality intenStatus = Intentionality.INTENTIONAL;
 	
@@ -42,13 +45,12 @@ public class Appraisal extends AffectiveAgent{
 	public boolean isControllable(double dValue, double alphaValue, double thresholdValue) {
 		
 		int i = 0;
+		int turnCount = getTurnCount();
 		
 		double accDenom = 0.0;
 		double weight = 0.0;
 		double numerator = 0.0;
 		double controllabilityResult = 0.0;
-		
-		turnCount = getTurnCount();
 		
 		for (i = 1 ; i <= turnCount ; i++)
 			accDenom += Math.pow(0.5, i);
@@ -59,7 +61,7 @@ public class Appraisal extends AffectiveAgent{
 			numerator += weight*(getAcceptedOffersCount(i)/getTotalOffersCount(i)); 
 		}
 		
-		controllabilityResult = ((double)numerator/(turnCount*Math.pow(getTime(), dValue))) + alphaValue;
+		controllabilityResult = ((double)numerator/(turnCount*Math.pow(getTime(Time.SECONDS), dValue))) + alphaValue;
 		
 		if (controllabilityResult <= thresholdValue) return false; else return true;
 	}
@@ -90,16 +92,20 @@ public class Appraisal extends AffectiveAgent{
 		return -1.0;
 	}
 	
-	private int getTurnCount() {
-		return this.turnCount;
-	}
-	
-	public void setTurnCount(int turnCount) {
-		this.turnCount = turnCount;
-	}
-	
-	private long getTime() {
-		return (System.currentTimeMillis()-startingTime)/1000;
+	private long getTime(Time time) {
+		
+		switch(time)
+		{
+			case SECONDS:
+				return (System.currentTimeMillis()-startingTime)/1000;
+			case MINUTES:
+				return (System.currentTimeMillis()-startingTime)/60000;
+			case TURNS:
+				return getTurnCount();
+			default:
+				System.out.println("Wrong type of requested time!");
+				return -1;
+		}
 	}
 	
 	public void startClock() {
