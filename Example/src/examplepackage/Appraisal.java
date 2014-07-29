@@ -1,12 +1,15 @@
 package examplepackage;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.jfree.data.function.PowerFunction2D;
 
 import examplepackage.AffectiveAgent.AgentLabel;
 import negotiator.Bid;
 import negotiator.analysis.BidSpace;
+import negotiator.issue.ValueInteger;
 import negotiator.utility.UtilitySpace;
 import agents.bayesianopponentmodel.OpponentModel;
 import agents.bayesianopponentmodel.OpponentModelUtilSpace;
@@ -15,6 +18,11 @@ public class Appraisal extends AffectiveAgent{
 	
 	private long startingTime = 0;
 	private long elapsedTime  = 0;
+	
+	private final String[] userModels = {"RPL", "RLP", "PLR", "PRL", "LPR", "LRP"};
+	
+	private Map<String, Double> probabilities = new HashMap<String, Double>();
+	
 	private FairnessType fairnessType = FairnessType.NASH;
 	
 	private enum FairnessType {NASH, KALAI};
@@ -55,7 +63,7 @@ public class Appraisal extends AffectiveAgent{
 		for (i = 1 ; i <= turnCount ; i++)
 			accDenom += Math.pow(0.5, i);
 		
-		for (i = turnCount ; i <= 1 ; i--)
+		for (i = turnCount ; i >= 1 ; i--)
 		{
 			weight = (double)Math.pow(0.5, i)/accDenom;
 			numerator += weight*(getAcceptedOffersCount(i)/getTotalOffersCount(i)); 
@@ -69,6 +77,34 @@ public class Appraisal extends AffectiveAgent{
 	public boolean isControllable(Bid opponentLastBid, double thresholdValue) throws Exception {
 		
 		if((getUtility(utilitySpace.getMaxUtilityBid()) - thresholdValue) < getUtility(opponentLastBid)) return true; else return false;
+	}
+	
+	public boolean isUnexpected(Bid opponentLastBid, double thresholdValue) {
+		
+		double unexpectednessResult = 0.0;
+		
+		updateUserModelProbabilities(opponentLastBid);
+		
+		if (unexpectednessResult <= thresholdValue) return false; else return true;
+	}
+	
+	private void initializeUserModelProbabilities() {
+		
+		for (int i = 0 ; i < userModels.length ; i++)
+		{
+			probabilities.put(userModels[i], (double)100/userModels.length);
+		}
+	}
+	
+	private void initializeUserModelProbabilities(String defaultUserModel, Double probability) {
+		
+		probabilities.put(defaultUserModel, probability);
+		
+		for (int i = 0 ; i < userModels.length ; i++)
+		{
+			if(!userModels[i].equals(defaultUserModel)) 
+				probabilities.put(userModels[i], (double)(100-probability)/(userModels.length-1));
+		}
 	}
 	
 	public boolean isIntentional() {
@@ -118,5 +154,19 @@ public class Appraisal extends AffectiveAgent{
 	
 	public void setFairnessType(FairnessType fairnessType) {
 		this.fairnessType = fairnessType;
+	}
+	
+	private void updateUserModelProbabilities(Bid opponentLastBid) {
+		
+		double sum = 0.0;
+		
+		for(int i = 1 ; i <= opponentLastBid.getIssues().size() ; i++)
+		{
+			String test = opponentLastBid.getValue(i).toString();
+			Integer.parseInt(test);
+			if(((double)Double.parseDouble(opponentLastBid.getValue(i).toString())/
+					Double.parseDouble(utilitySpace.getMaxUtilityBid().getValue(i).toString())) == 1)
+				probabilities.put(userModels[i], value)
+		}
 	}
 }
