@@ -28,8 +28,8 @@ public class AffectiveAgent extends Agent
 	private Action opponentLastAction = null;
 	private Action selfLastAction  = null;
 	
-	private List<Bid> opponentBidHistory;
-	private List<Bid> selfBidHistory;
+	public List<Bid> opponentBidHistory;
+	public List<Bid> selfBidHistory;
 	
 	private ArrayList<Integer> acceptedOffersCount = new ArrayList<Integer>();
 	

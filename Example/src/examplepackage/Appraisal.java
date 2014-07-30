@@ -3,12 +3,16 @@ package examplepackage;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.jfree.data.function.PowerFunction2D;
+
 import examplepackage.AffectiveAgent.AgentLabel;
 import negotiator.Bid;
 import negotiator.analysis.BidSpace;
 import negotiator.issue.ValueInteger;
 import negotiator.utility.UtilitySpace;
+import agents.anac.y2012.CUHKAgent.OpponentBidHistory;
+import agents.anac.y2013.MetaAgent.portfolio.thenegotiatorreloaded.BidIterator;
 import agents.bayesianopponentmodel.OpponentModel;
 import agents.bayesianopponentmodel.OpponentModelUtilSpace;
 
@@ -16,6 +20,12 @@ public class Appraisal extends AffectiveAgent{
 	
 	private long startingTime = 0;
 	private long elapsedTime  = 0;
+	
+	private double rSquared = 0.0;
+	
+	private Double minUtility=null, maxUtility=null;
+	
+	private double beta1, beta0;
 	
 	private final String[] userModels = {"RPL", "RLP", "PLR", "PRL", "LPR", "LRP"};
 	
@@ -33,7 +43,7 @@ public class Appraisal extends AffectiveAgent{
 	public boolean isDesirable(OpponentModel opponentModel, Bid opponentLastBid, EvaluationType evalType, double threshold) throws Exception {
 		
 		BidSpace bs = new BidSpace(utilitySpace, new OpponentModelUtilSpace(opponentModel), false, true);
-		double obtainedUtility = bs.ourUtilityOnPareto(opponentModel.getNormalizedUtility(opponentLastBid));
+		double obtainedUtility = bs.ourUtilityOnPareto(opponentModel.getNormalizedUtility(opponentLastBid)); // This should be just the utility instead of utility on Pareto!
 
 		switch (evalType)
 		{
@@ -83,6 +93,17 @@ public class Appraisal extends AffectiveAgent{
 		updateUserModelProbabilities(opponentLastBid);
 
 		if (getUserModelDistance() <= thresholdValue) return false; else return true;
+	}
+	
+	public boolean isTemporalStatusFuture(OpponentModel opponentModel, double time, double rSquaredThresholdValue, double acceptableDistanceToAspirationValue) throws Exception {
+		
+		computeLinearRegression();
+		
+		if (getrSquaredValue() >= rSquaredThresholdValue)
+			if(estimateUtilityDistanceToAspirationValueAtTime(time) <= acceptableDistanceToAspirationValue)
+				return true;
+		
+		return false;
 	}
 	
 	private void initializeUserModelProbabilities() {
@@ -368,5 +389,85 @@ public class Appraisal extends AffectiveAgent{
 		lastProbabilities = (HashMap)probabilities.clone();
 		
 		return Math.sqrt(sum);
+	}
+	
+	private void computeLinearRegression() {
+        int n = 1;
+
+        double opponentBidUtility;
+        double sumx = 0.0, sumy = 0.0, sumx2 = 0.0;
+        
+        while(opponentBidHistory.size() >= n) {
+            opponentBidUtility = getUtility(opponentBidHistory.get(n-1));
+        	sumx  += opponentBidUtility;
+            sumx2 += opponentBidUtility * opponentBidUtility;
+            sumy  += n;
+            n++;
+        }
+        
+        double xbar = sumx / n;
+        double ybar = sumy / n;
+
+        double xxbar = 0.0, yybar = 0.0, xybar = 0.0;
+        
+        for (int i = 1; i <= n; i++) {
+        	opponentBidUtility = getUtility(opponentBidHistory.get(i-1));
+            xxbar += (opponentBidUtility - xbar) * (opponentBidUtility - xbar);
+            yybar += (i - ybar) * (i - ybar);
+            xybar += (opponentBidUtility - xbar) * (i - ybar);
+        }
+        
+        beta1 = xybar / xxbar;
+        beta0 = ybar - beta1 * xbar;
+
+        System.out.println("y = " + beta1 + " * x + " + beta0);
+
+        double ssr = 0.0;      // regression sum of squares
+        
+        for (int i = 0; i < n; i++) {
+            double fit = beta1 * getUtility(opponentBidHistory.get(i)) + beta0;
+            ssr += (fit - ybar) * (fit - ybar);
+        }
+        
+        rSquared = ssr / yybar;
+	}
+	
+	private double getrSquaredValue() {
+		return rSquared;
+	}
+	
+	private double estimateUtilityDistanceToAspirationValueAtTime(double time) throws Exception {
+		return Math.abs(getUtility(utilitySpace.getMaxUtilityBid()) - getNormalizedUtility(beta1 + (time * beta0)));
+	}
+	
+	private double getNormalizedUtility(double utilityValue) throws Exception
+	{
+		double value = 0.0;
+		
+		if (minUtility == null || maxUtility == null) findMinMaxUtility();
+		
+		if ((maxUtility-minUtility) != 0)
+			value = (utilityValue-minUtility)/(maxUtility-minUtility);
+		
+		if (Double.isNaN(value) || (value == 0.0)) return 0.0;
+
+		return (utilityValue-minUtility)/(maxUtility-minUtility);
+	}
+	
+	private void findMinMaxUtility() throws Exception
+	{
+		double utility;
+		
+		BidIterator biditer=new BidIterator(utilitySpace.getDomain());
+		
+		minUtility = 1.0;  maxUtility = 0.0;
+
+		while (biditer.hasNext())
+		{
+			utility=getUtility(biditer.next());
+			
+			if (minUtility > utility) minUtility = utility;
+			if (maxUtility < utility) maxUtility = utility;
+		}
 	}
 }
