@@ -3,9 +3,7 @@ package examplepackage;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.jfree.data.function.PowerFunction2D;
-
 import examplepackage.AffectiveAgent.AgentLabel;
 import negotiator.Bid;
 import negotiator.analysis.BidSpace;
@@ -21,7 +19,8 @@ public class Appraisal extends AffectiveAgent{
 	
 	private final String[] userModels = {"RPL", "RLP", "PLR", "PRL", "LPR", "LRP"};
 	
-	private Map<String, Double> probabilities = new HashMap<String, Double>();
+	private HashMap<String, Double> probabilities = new HashMap<String, Double>();
+	private HashMap<String, Double> lastProbabilities = new HashMap<String, Double>();
 	
 	private FairnessType fairnessType = FairnessType.NASH;
 	
@@ -79,13 +78,11 @@ public class Appraisal extends AffectiveAgent{
 		if((getUtility(utilitySpace.getMaxUtilityBid()) - thresholdValue) < getUtility(opponentLastBid)) return true; else return false;
 	}
 	
-	public boolean isUnexpected(Bid opponentLastBid, double thresholdValue) {
-		
-		double unexpectednessResult = 0.0;
+	public boolean isUnexpected(Bid opponentLastBid, double thresholdValue) throws Exception {
 		
 		updateUserModelProbabilities(opponentLastBid);
-		
-		if (unexpectednessResult <= thresholdValue) return false; else return true;
+
+		if (getUserModelDistance() <= thresholdValue) return false; else return true;
 	}
 	
 	private void initializeUserModelProbabilities() {
@@ -94,6 +91,8 @@ public class Appraisal extends AffectiveAgent{
 		{
 			probabilities.put(userModels[i], (double)100/userModels.length);
 		}
+		
+		lastProbabilities = (HashMap)probabilities.clone();
 	}
 	
 	private void initializeUserModelProbabilities(String defaultUserModel, Double probability) {
@@ -105,6 +104,8 @@ public class Appraisal extends AffectiveAgent{
 			if(!userModels[i].equals(defaultUserModel)) 
 				probabilities.put(userModels[i], (double)(100-probability)/(userModels.length-1));
 		}
+		
+		lastProbabilities = (HashMap)probabilities.clone();
 	}
 	
 	public boolean isIntentional() {
@@ -156,17 +157,216 @@ public class Appraisal extends AffectiveAgent{
 		this.fairnessType = fairnessType;
 	}
 	
-	private void updateUserModelProbabilities(Bid opponentLastBid) {
+	private void updateUserModelProbabilities(Bid opponentLastBid) throws Exception {
+		
+		updateUserModelProbabilityRecord(opponentLastBid);
+		updateUserModelProbabilityLamp(opponentLastBid);
+		updateUserModelProbabilityPainting(opponentLastBid);
+	}
+	
+	private void updateUserModelProbabilityRecord(Bid opponentLastBid) throws Exception {
+		
+		int issueAmount = Integer.parseInt(opponentLastBid.getValue(1).toString());
+		
+		switch (issueAmount) {
+			case 0:
+				for (int i= 0 ; i < userModels.length ; i++)
+				{
+					if(userModels[i].equals("RPL") || userModels[i].equals("RLP")) {
+						probabilities.put("RPL", probabilities.get("RPL")*3);
+						probabilities.put("RLP", probabilities.get("RLP")*3);
+					}
+					else if(userModels[i].equals("PRL") || userModels[i].equals("LRP")) {
+						probabilities.put("PRL", probabilities.get("PRL")*2);
+						probabilities.put("LRP", probabilities.get("LRP")*2);						
+					}
+					else if(userModels[i].equals("PLR") || userModels[i].equals("LPR")) {
+						probabilities.put("PLR", probabilities.get("PLR")*1);
+						probabilities.put("LPR", probabilities.get("LPR")*1);
+					}
+				}
+				break;
+			case 1:
+				for (int i= 0 ; i < userModels.length ; i++)
+				{
+					if(userModels[i].equals("RPL") || userModels[i].equals("RLP")) {
+						probabilities.put("RPL", probabilities.get("RPL")*2);
+						probabilities.put("RLP", probabilities.get("RLP")*2);
+					}
+					else if(userModels[i].equals("PRL") || userModels[i].equals("LRP")) {
+						probabilities.put("PRL", probabilities.get("PRL")*1.5);
+						probabilities.put("LRP", probabilities.get("LRP")*1.5);						
+					}
+					else if(userModels[i].equals("PLR") || userModels[i].equals("LPR")) {
+						probabilities.put("PLR", probabilities.get("PLR")*1);
+						probabilities.put("LPR", probabilities.get("LPR")*1);
+					}
+				}
+				break;
+			case 2:
+				for (int i= 0 ; i < userModels.length ; i++)
+				{
+					if(userModels[i].equals("RPL") || userModels[i].equals("RLP")) {
+						probabilities.put("RPL", (double)probabilities.get("RPL")/2);
+						probabilities.put("RLP", (double)probabilities.get("RLP")/2);
+					}
+					else if(userModels[i].equals("PRL") || userModels[i].equals("LRP")) {
+						probabilities.put("PRL", (double)probabilities.get("PRL")/1.5);
+						probabilities.put("LRP", (double)probabilities.get("LRP")/1.5);						
+					}
+					else if(userModels[i].equals("PLR") || userModels[i].equals("LPR")) {
+						probabilities.put("PLR", (double)probabilities.get("PLR")/1);
+						probabilities.put("LPR", (double)probabilities.get("LPR")/1);
+					}
+				}
+				break;
+			case 3:
+				for (int i= 0 ; i < userModels.length ; i++)
+				{
+					if(userModels[i].equals("RPL") || userModels[i].equals("RLP")) {
+						probabilities.put("RPL", (double)probabilities.get("RPL")/3);
+						probabilities.put("RLP", (double)probabilities.get("RLP")/3);
+					}
+					else if(userModels[i].equals("PRL") || userModels[i].equals("LRP")) {
+						probabilities.put("PRL", (double)probabilities.get("PRL")/2);
+						probabilities.put("LRP", (double)probabilities.get("LRP")/2);						
+					}
+					else if(userModels[i].equals("PLR") || userModels[i].equals("LPR")) {
+						probabilities.put("PLR", (double)probabilities.get("PLR")/1);
+						probabilities.put("LPR", (double)probabilities.get("LPR")/1);
+					}
+				}
+				break;
+		}
+		
+		normalizeProbabilities();
+	}
+	
+	private void updateUserModelProbabilityLamp(Bid opponentLastBid) throws Exception {
+		
+		int issueAmount = Integer.parseInt(opponentLastBid.getValue(2).toString());
+		
+		switch (issueAmount) {
+		case 0:
+			for (int i= 0 ; i < userModels.length ; i++)
+			{
+				if(userModels[i].equals("LPR") || userModels[i].equals("LRP")) {
+					probabilities.put("LPR", probabilities.get("LPR")*3);
+					probabilities.put("LRP", probabilities.get("LRP")*3);
+				}
+				else if(userModels[i].equals("PLR") || userModels[i].equals("RLP")) {
+					probabilities.put("PLR", probabilities.get("PLR")*2);
+					probabilities.put("RLP", probabilities.get("RLP")*2);						
+				}
+				else if(userModels[i].equals("PRL") || userModels[i].equals("RPL")) {
+					probabilities.put("PRL", probabilities.get("PRL")*1);
+					probabilities.put("RPL", probabilities.get("RPL")*1);
+				}
+			}
+			break;
+		case 1:
+			for (int i= 0 ; i < userModels.length ; i++)
+			{
+				if(userModels[i].equals("LPR") || userModels[i].equals("LRP")) {
+					probabilities.put("LPR", (double)probabilities.get("LPR")/2);
+					probabilities.put("LRP", (double)probabilities.get("LRP")/2);
+				}
+				else if(userModels[i].equals("PLR") || userModels[i].equals("RLP")) {
+					probabilities.put("PLR", (double)probabilities.get("PLR")/1.5);
+					probabilities.put("RLP", (double)probabilities.get("RLP")/1.5);						
+				}
+				else if(userModels[i].equals("PRL") || userModels[i].equals("RPL")) {
+					probabilities.put("PRL", (double)probabilities.get("PRL")/1);
+					probabilities.put("RPL", (double)probabilities.get("RPL")/1);
+				}
+			}
+			break;
+		case 2:
+			for (int i= 0 ; i < userModels.length ; i++)
+			{
+				if(userModels[i].equals("LPR") || userModels[i].equals("LRP")) {
+					probabilities.put("LPR", (double)probabilities.get("LPR")/3);
+					probabilities.put("LRP", (double)probabilities.get("LRP")/3);
+				}
+				else if(userModels[i].equals("PLR") || userModels[i].equals("RLP")) {
+					probabilities.put("PLR", (double)probabilities.get("PLR")/2);
+					probabilities.put("RLP", (double)probabilities.get("RLP")/2);						
+				}
+				else if(userModels[i].equals("PRL") || userModels[i].equals("RPL")) {
+					probabilities.put("PRL", (double)probabilities.get("PRL")/1);
+					probabilities.put("RPL", (double)probabilities.get("RPL")/1);
+				}
+			}
+			break;
+		}
+		
+		normalizeProbabilities();
+	}
+	
+	private void updateUserModelProbabilityPainting(Bid opponentLastBid) throws Exception {
+		
+		int issueAmount = Integer.parseInt(opponentLastBid.getValue(3).toString());
+		
+		switch (issueAmount) {
+		case 0:
+			for (int i= 0 ; i < userModels.length ; i++)
+			{
+				if(userModels[i].equals("PRL") || userModels[i].equals("PLR")) {
+					probabilities.put("PRL", probabilities.get("PRL")*3);
+					probabilities.put("PLR", probabilities.get("PLR")*3);
+				}
+				else if(userModels[i].equals("RPL") || userModels[i].equals("LPR")) {
+					probabilities.put("RPL", probabilities.get("RPL")*2);
+					probabilities.put("LPR", probabilities.get("LPR")*2);						
+				}
+				else if(userModels[i].equals("LRP") || userModels[i].equals("RLP")) {
+					probabilities.put("LRP", probabilities.get("LRP")*1);
+					probabilities.put("RLP", probabilities.get("RLP")*1);
+				}
+			}
+			break;
+		case 1:
+			for (int i= 0 ; i < userModels.length ; i++)
+			{
+				if(userModels[i].equals("PRL") || userModels[i].equals("PLR")) {
+					probabilities.put("PRL", (double)probabilities.get("PRL")/3);
+					probabilities.put("PLR", (double)probabilities.get("PLR")/3);
+				}
+				else if(userModels[i].equals("RPL") || userModels[i].equals("LPR")) {
+					probabilities.put("RPL", (double)probabilities.get("RPL")/2);
+					probabilities.put("LPR", (double)probabilities.get("LPR")/2);						
+				}
+				else if(userModels[i].equals("LRP") || userModels[i].equals("RLP")) {
+					probabilities.put("LRP", (double)probabilities.get("LRP")/1);
+					probabilities.put("RLP", (double)probabilities.get("RLP")/1);
+				}
+			}
+			break;
+		}
+		
+		normalizeProbabilities();
+	}
+	
+	private void normalizeProbabilities() {
 		
 		double sum = 0.0;
 		
-		for(int i = 1 ; i <= opponentLastBid.getIssues().size() ; i++)
-		{
-			String test = opponentLastBid.getValue(i).toString();
-			Integer.parseInt(test);
-			if(((double)Double.parseDouble(opponentLastBid.getValue(i).toString())/
-					Double.parseDouble(utilitySpace.getMaxUtilityBid().getValue(i).toString())) == 1)
-				probabilities.put(userModels[i], value)
-		}
+		for (int i= 0 ; i < userModels.length ; i++)
+			sum += probabilities.get(userModels[i]);
+		
+		for (int i= 0 ; i < userModels.length ; i++)
+			probabilities.put(userModels[i], (double)probabilities.get(userModels[i])/sum);
+	}
+	
+	private double getUserModelDistance() {
+		
+		double sum = 0.0;
+		
+		for (int i= 0 ; i < userModels.length ; i++)
+			sum += Math.pow(probabilities.get(userModels[i])-lastProbabilities.get(userModels[i]), 2);
+		
+		lastProbabilities = (HashMap)probabilities.clone();
+		
+		return Math.sqrt(sum);
 	}
 }
