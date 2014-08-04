@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import agents.bayesianopponentmodel.BayesianOpponentModel;
+import agents.bayesianopponentmodel.OpponentModel;
 import negotiator.Agent;
 import negotiator.AgentID;
 import negotiator.Bid;
@@ -44,7 +44,7 @@ public class AffectiveAgent extends Agent
 	
 	private AgentLabel agentLabel;
 	
-	private BayesianOpponentModel fOpponentModel;
+	private OpponentModel fOpponentModel;
 	
 	private ArrayList<Bid> myPreviousBids;
 	
@@ -110,7 +110,7 @@ public class AffectiveAgent extends Agent
 	}
 	
 	private void prepareOpponentModel() {
-		fOpponentModel = new BayesianOpponentModel(utilitySpace);
+		fOpponentModel = new OpponentModel();
 	}
 	
 	private void appraise() {
@@ -152,7 +152,6 @@ public class AffectiveAgent extends Agent
 				updateOpponentLastOffer(opponentLastBid);
 				
 				opponentBidHistory.add(((Offer)opponentAction).getBid());
-				
 			} catch(Exception e) {
 				e.printStackTrace();
 			}

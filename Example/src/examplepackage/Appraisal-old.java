@@ -1,24 +1,25 @@
 package examplepackage;
 
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
+import org.jfree.data.function.PowerFunction2D;
+
+import examplepackage.AffectiveAgent.AgentLabel;
 import negotiator.Bid;
 import negotiator.analysis.BidSpace;
+import negotiator.issue.ValueInteger;
+import negotiator.utility.UtilitySpace;
+import agents.anac.y2012.CUHKAgent.OpponentBidHistory;
 import agents.anac.y2013.MetaAgent.portfolio.thenegotiatorreloaded.BidIterator;
-import agents.bayesianopponentmodel.BayesianOpponentModel;
+import agents.bayesianopponentmodel.OpponentModel;
 import agents.bayesianopponentmodel.OpponentModelUtilSpace;
-
-/**
- * @author M. Shayganfar
- * 
- * Appraisal Variables: Desirability, Controllability and Unexpectedness.
- * Emotions: Worriedness, Sadness, Anger, Joy, Neg. Surprise.
- */
 
 public class Appraisal extends AffectiveAgent{
 	
 	private long startingTime = 0;
-//	private long elapsedTime  = 0;
+	private long elapsedTime  = 0;
 	
 	private double rSquared = 0.0;
 	
@@ -39,19 +40,19 @@ public class Appraisal extends AffectiveAgent{
 	
 	private Intentionality intenStatus = Intentionality.INTENTIONAL;
 	
-	public boolean isDesirable(BayesianOpponentModel opponentModel, Bid opponentLastBid, EvaluationType evalType, double threshold) throws Exception {
+	public boolean isDesirable(OpponentModel opponentModel, Bid opponentLastBid, EvaluationType evalType, double threshold) throws Exception {
 		
-		//BidSpace bs = new BidSpace(utilitySpace, new OpponentModelUtilSpace(opponentModel), false, true);
-		//double obtainedUtility = bs.ourUtilityOnPareto(opponentModel.getNormalizedUtility(opponentLastBid));
-		
+		BidSpace bs = new BidSpace(utilitySpace, new OpponentModelUtilSpace(opponentModel), false, true);
+		double obtainedUtility = bs.ourUtilityOnPareto(opponentModel.getNormalizedUtility(opponentLastBid)); // This should be just the utility instead of utility on Pareto!
+
 		switch (evalType)
 		{
 			case BATNA:
-				if ((getUtility(opponentLastBid) - utilitySpace.getReservationValue()) >= threshold) return true; else return false;
+				if ((obtainedUtility - utilitySpace.getReservationValue()) > threshold) return true; else return false;
 			case MAX:
-				if ((getUtility(utilitySpace.getMaxUtilityBid()) - getUtility(opponentLastBid)) <= threshold) return true; else return false;
+				if ((getUtility(utilitySpace.getMaxUtilityBid()) - obtainedUtility) < threshold) return true; else return false;
 			case FAIR:
-				if ((getUtility(opponentLastBid) - getFairUtilityOnPareto(new BidSpace(utilitySpace, new OpponentModelUtilSpace(opponentModel), false, true), getFairnessType())) >= threshold) return true; else return false;
+				if ((obtainedUtility - getFairUtilityOnPareto(bs, getFairnessType())) > threshold) return true; else return false;
 			default:
 				System.out.println("Appraisal--Desirability Failed!");
 				return false;
@@ -87,18 +88,6 @@ public class Appraisal extends AffectiveAgent{
 		if((getUtility(utilitySpace.getMaxUtilityBid()) - thresholdValue) < getUtility(opponentLastBid)) return true; else return false;
 	}
 	
-	public int isControllable(double regressionValidityThreshold, double distanceToApirationThreshold, long time) throws Exception {
-		
-		computeLinearRegression();
-		
-		if(getrSquaredValue() >= regressionValidityThreshold)
-			if (estimateUtilityDistanceToAspirationValueAtTime(time) > distanceToApirationThreshold) return 0; else return 1; 
-		else
-			System.out.println("Invalid regression line!");
-		
-		return -1;
-	}
-	
 	public boolean isUnexpected(Bid opponentLastBid, double thresholdValue) throws Exception {
 		
 		updateUserModelProbabilities(opponentLastBid);
@@ -106,12 +95,7 @@ public class Appraisal extends AffectiveAgent{
 		if (getUserModelDistance() <= thresholdValue) return false; else return true;
 	}
 	
-	public boolean isUnexpected(double thresholdValue) throws Exception {
-		
-		if (Math.log(1 + getMaxHistoryUtility() - getUtility(opponentBidHistory.get(opponentBidHistory.size()-1))) >= thresholdValue) return true; else return false;
-	}
-
-	public boolean isTemporalStatusFuture(BayesianOpponentModel opponentModel, double time, double rSquaredThresholdValue, double acceptableDistanceToAspirationValue) throws Exception {
+	public boolean isTemporalStatusFuture(OpponentModel opponentModel, double time, double rSquaredThresholdValue, double acceptableDistanceToAspirationValue) throws Exception {
 		
 		computeLinearRegression();
 		
@@ -440,7 +424,7 @@ public class Appraisal extends AffectiveAgent{
 
         double ssr = 0.0;      // regression sum of squares
         
-        for (int i = 0 ; i < n ; i++) {
+        for (int i = 0; i < n; i++) {
             double fit = beta1 * getUtility(opponentBidHistory.get(i)) + beta0;
             ssr += (fit - ybar) * (fit - ybar);
         }
@@ -485,16 +469,5 @@ public class Appraisal extends AffectiveAgent{
 			if (minUtility > utility) minUtility = utility;
 			if (maxUtility < utility) maxUtility = utility;
 		}
-	}
-	
-	private double getMaxHistoryUtility() {
-		
-		double maxUtility = 0.0;
-		
-		for (int i = 0 ; i < opponentBidHistory.size() ; i++)
-			if (maxUtility < getUtility(opponentBidHistory.get(i)))
-				maxUtility = getUtility(opponentBidHistory.get(i));
-		
-		return maxUtility;
 	}
 }
