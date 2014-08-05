@@ -60,7 +60,7 @@ public class Appraisal extends AffectiveAgent{
 		}
 	}
 	
-	private boolean isControllable(Bid opponentLastBid, double dValue, double thresholdValue) throws Exception {
+	private boolean isControllable(UtilitySpace utilSpace, Bid opponentLastBid, double dValue, double thresholdValue) throws Exception {
 		
 		int i = 0;
 		int turnCount = getTurnCount();
@@ -76,10 +76,10 @@ public class Appraisal extends AffectiveAgent{
 		for (i = turnCount ; i >= 1 ; i--)
 		{
 			weight = (double)Math.pow(0.5, i)/accDenom;
-			numerator += weight*(getAcceptedOffersCount(i)/getTotalOffersCount(i)); 
+			numerator += weight*((getTotalOffersCount(i) != 0) ? (getAcceptedOffersCount(i)/getTotalOffersCount(i)) : 0.5); 
 		}
 		
-		controllabilityResult = ((double)numerator/(turnCount*Math.pow(getTime(Time.SECONDS), dValue))) + getAlphaValue(opponentLastBid);
+		controllabilityResult = ((double)numerator/(turnCount*Math.pow(getTime(Time.SECONDS), dValue))) + getAlphaValue(utilSpace, opponentLastBid);
 		
 		if (controllabilityResult <= thresholdValue) return false; else return true;
 	}
@@ -108,7 +108,7 @@ public class Appraisal extends AffectiveAgent{
 		if(contrllability != -1)
 			if (contrllability == 0) return false;
 			else if (contrllability == 1) return true;
-		else if (isControllable(opponentLastBid, dTimeGrowthValue, nonRegressionContrallabilityThresholdValue)) return true;
+		else if (isControllable(utilSpace, opponentLastBid, dTimeGrowthValue, nonRegressionContrallabilityThresholdValue)) return true;
 		
 		return false;
 	}
@@ -125,7 +125,7 @@ public class Appraisal extends AffectiveAgent{
 		if (Math.log(1 + getMaxHistoryUtility() - getUtility(opponentBidHistory.get(opponentBidHistory.size()-1))) >= thresholdValue) return true; else return false;
 	}
 
-	public boolean isTemporalStatusFuture(UtilitySpace utilSpace, BayesianOpponentModel opponentModel, double time, double rSquaredThresholdValue, double acceptableDistanceToAspirationValue) throws Exception {
+	public boolean isTemporalStatusFuture(UtilitySpace utilSpace, BayesianOpponentModel opponentModel, long time, double rSquaredThresholdValue, double acceptableDistanceToAspirationValue) throws Exception {
 		
 		computeLinearRegression(utilSpace);
 		
@@ -435,8 +435,8 @@ public class Appraisal extends AffectiveAgent{
             n++;
         }
         
-        double xbar = (double)sumx/n;
-        double ybar = (double)sumy/n;
+        double xbar = (n != 0) ? (double)sumx/n : 0.0;
+        double ybar = (n != 0) ? (double)sumy/n : 0.0;
 
         double xxbar = 0.0, yybar = 0.0, xybar = 0.0;
         
@@ -447,26 +447,26 @@ public class Appraisal extends AffectiveAgent{
             xybar += (opponentBidUtility - xbar) * (i - ybar);
         }
         
-        beta1 = (double)xybar/xxbar;
+        beta1 = (xxbar != 0.0) ? (double)xybar/xxbar : 0.0;
         beta0 = ybar - beta1 * xbar;
 
         System.out.println("y = " + beta1 + " * x + " + beta0);
 
-        double ssr = 0.0;      // regression sum of squares
+        double ssr = 0.0;
         
         for (int i = 0 ; i < n ; i++) {
             double fit = beta1 * utilSpace.getUtility(opponentBidHistory.get(i)) + beta0;
             ssr += (fit - ybar) * (fit - ybar);
         }
         
-        rSquared = (double)ssr/yybar;
+        rSquared = (yybar != 0.0) ? (double)ssr/yybar : 0.0;
 	}
 	
 	private double getrSquaredValue() {
 		return rSquared;
 	}
 	
-	private double estimateUtilityDistanceToAspirationValueAtTime(UtilitySpace utilSpace, double time) throws Exception {
+	private double estimateUtilityDistanceToAspirationValueAtTime(UtilitySpace utilSpace, long time) throws Exception {
 		return Math.abs(utilSpace.getUtility(utilSpace.getMaxUtilityBid()) - getNormalizedUtility(utilSpace, beta1 + (time * beta0)));
 	}
 	
@@ -512,7 +512,13 @@ public class Appraisal extends AffectiveAgent{
 		return maxUtility;
 	}
 	
-	private double getAlphaValue(Bid opponentBid) throws Exception {
-		return (double)1/(Math.abs(getUtility(utilitySpace.getMaxUtilityBid()) - getUtility(opponentBid)));
+	private double getAlphaValue(UtilitySpace utilSpace, Bid opponentBid) throws Exception {
+		
+		double distance = getUtility(utilSpace.getMaxUtilityBid()) - utilSpace.getUtility(opponentBid);
+		
+		if (distance != 0.0)
+			return ((double)1.0/Math.abs(distance) * 0.1);
+		else
+			return 1.0;
 	}
 }

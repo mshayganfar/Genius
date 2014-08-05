@@ -25,7 +25,7 @@ import examplepackage.Appraisal;
  */
 public class AffectiveAgent extends Agent
 {
-	private enum Emotions {WORRIEDNESS, HAPPY, SAD, ANGER, SURPRISE};
+	private enum Emotions {WORRIEDNESS, HAPPY, SAD, ANGER, SURPRISE, HOPE};
 	public enum AgentLabel {A, B};
 	public enum EvaluationType {BATNA, FAIR, MAX};
 	
@@ -114,7 +114,7 @@ public class AffectiveAgent extends Agent
 		if (appraisal.isControllable(utilitySpace, opponentLastBid, 0.8, 0.1, 180, 0.1, 0.5))
 			System.out.println("+++++ Expressed Emotion: " + Emotions.WORRIEDNESS);
 		else
-			System.out.println("+++++ Expressed Emotion: " + Emotions.WORRIEDNESS);
+			System.out.println("+++++ Expressed Emotion: " + Emotions.HOPE);
 	}
 	
 	private Action proposeInitialBid() throws Exception {
