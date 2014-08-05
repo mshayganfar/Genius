@@ -106,10 +106,15 @@ public class AffectiveAgent extends Agent
 	
 	private void appraise() throws Exception {
 		
-		if(appraisal.isDesirable(utilitySpace, fOpponentModel, opponentLastBid, EvaluationType.FAIR, 0.5))
-			System.out.println("+++++ Expressed Emotion: " + Emotions.HAPPY);
+//		if(appraisal.isDesirable(utilitySpace, fOpponentModel, opponentLastBid, EvaluationType.FAIR, 0.5))
+//			System.out.println("+++++ Expressed Emotion: " + Emotions.HAPPY);
+//		else
+//			System.out.println("+++++ Expressed Emotion: " + Emotions.SAD);
+		
+		if (appraisal.isControllable(utilitySpace, opponentLastBid, 0.8, 0.1, 180, 0.1, 0.5))
+			System.out.println("+++++ Expressed Emotion: " + Emotions.WORRIEDNESS);
 		else
-			System.out.println("+++++ Expressed Emotion: " + Emotions.SAD);
+			System.out.println("+++++ Expressed Emotion: " + Emotions.WORRIEDNESS);
 	}
 	
 	private Action proposeInitialBid() throws Exception {
