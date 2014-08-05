@@ -4,9 +4,11 @@ import java.util.HashMap;
 
 import negotiator.Bid;
 import negotiator.analysis.BidSpace;
+import negotiator.utility.UtilitySpace;
 import agents.anac.y2013.MetaAgent.portfolio.thenegotiatorreloaded.BidIterator;
 import agents.bayesianopponentmodel.BayesianOpponentModel;
 import agents.bayesianopponentmodel.OpponentModelUtilSpace;
+import examplepackage.AffectiveAgent;
 
 /**
  * @author M. Shayganfar
@@ -39,19 +41,19 @@ public class Appraisal extends AffectiveAgent{
 	
 	private Intentionality intenStatus = Intentionality.INTENTIONAL;
 	
-	public boolean isDesirable(BayesianOpponentModel opponentModel, Bid opponentLastBid, EvaluationType evalType, double threshold) throws Exception {
+	public boolean isDesirable(UtilitySpace utilSpace, BayesianOpponentModel opponentModel, Bid opponentLastBid, EvaluationType evalType, double threshold) throws Exception {
 		
 		//BidSpace bs = new BidSpace(utilitySpace, new OpponentModelUtilSpace(opponentModel), false, true);
 		//double obtainedUtility = bs.ourUtilityOnPareto(opponentModel.getNormalizedUtility(opponentLastBid));
-		
+		System.out.println("BATNA: " + utilSpace.getReservationValueUndiscounted());
 		switch (evalType)
 		{
 			case BATNA:
-				if ((getUtility(opponentLastBid) - utilitySpace.getReservationValue()) >= threshold) return true; else return false;
+				if ((utilSpace.getUtility(opponentLastBid) - utilSpace.getReservationValueUndiscounted()) >= threshold) return true; else return false;
 			case MAX:
-				if ((getUtility(utilitySpace.getMaxUtilityBid()) - getUtility(opponentLastBid)) <= threshold) return true; else return false;
+				if ((getUtility(utilSpace.getMaxUtilityBid()) - utilSpace.getUtility(opponentLastBid)) <= threshold) return true; else return false;
 			case FAIR:
-				if ((getUtility(opponentLastBid) - getFairUtilityOnPareto(new BidSpace(utilitySpace, new OpponentModelUtilSpace(opponentModel), false, true), getFairnessType())) >= threshold) return true; else return false;
+				if ((utilSpace.getUtility(opponentLastBid) - getFairUtilityOnPareto(utilSpace, new BidSpace(utilSpace, new OpponentModelUtilSpace(opponentModel), false, true), getFairnessType())) >= threshold) return true; else return false;
 			default:
 				System.out.println("Appraisal--Desirability Failed!");
 				return false;
@@ -153,14 +155,14 @@ public class Appraisal extends AffectiveAgent{
 		return true;
 	}
 	
-	private double getFairUtilityOnPareto(BidSpace bidSpace, FairnessType fairType) throws Exception {
+	private double getFairUtilityOnPareto(UtilitySpace utilSpace, BidSpace bidSpace, FairnessType fairType) throws Exception {
 		
 		switch(fairType)
 		{
 			case NASH:
-				return getUtility(bidSpace.getNash().getBid());
+				return utilSpace.getUtility(bidSpace.getNash().getBid());
 			case KALAI:
-				return getUtility(bidSpace.getKalaiSmorodinsky().getBid());
+				return utilSpace.getUtility(bidSpace.getKalaiSmorodinsky().getBid());
 		}
 		
 		return -1.0;

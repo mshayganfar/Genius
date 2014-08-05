@@ -9,9 +9,13 @@ import agents.bayesianopponentmodel.BayesianOpponentModel;
 import negotiator.Agent;
 import negotiator.AgentID;
 import negotiator.Bid;
+import negotiator.BidIterator;
+import negotiator.Timeline;
 import negotiator.actions.Accept;
 import negotiator.actions.Action;
+import negotiator.actions.EndNegotiation;
 import negotiator.actions.Offer;
+import examplepackage.Appraisal;
 
 /**
  * @author M. Shayganfar
@@ -36,9 +40,6 @@ public class AffectiveAgent extends Agent
 	private ArrayList<Integer> totalOffersCountAgentA    = new ArrayList<Integer>();
 	private ArrayList<Integer> totalOffersCountAgentB    = new ArrayList<Integer>();
 	
-	private Bid opponentLastOffer = new Bid();
-	private Bid selfLastOffer = new Bid();
-	
 	private Bid opponentLastBid = null;
 	private Bid selfLastBid     = null;
 	
@@ -52,31 +53,21 @@ public class AffectiveAgent extends Agent
 	
 	private int turnCount = 0;
 	
-	/** Note: {@link SimpleAgent} does not account for the discount factor in its computations */ 
-	private static double MINIMUM_BID_UTILITY = 0.0;
-
+	private Appraisal appraisal;
+	
 	/**
 	 * init is called when a next session starts with the same opponent.
 	 */
 	public void init()
 	{
+		appraisal = new Appraisal();
+		
 		opponentBidHistory = new ArrayList<Bid>();
 		selfBidHistory = new ArrayList<Bid>();
-		
-		MINIMUM_BID_UTILITY = utilitySpace.getReservationValueUndiscounted();
 		
 		String agentID = readAgentLabel();
 		if(!agentID.equals(null)) setAgentID(new AgentID(agentID));
 		
-		System.out.println("Reservation Value Undiscounted: " + MINIMUM_BID_UTILITY);
-		
-		System.out.println("Reservation Value: " + utilitySpace.getReservationValue());
-		
-		myPreviousBids = new ArrayList<Bid>();
-		
-		selfLastAction = null;
-		actionOfPartner = null;
-
 		prepareOpponentModel();
 	}
 
@@ -113,17 +104,17 @@ public class AffectiveAgent extends Agent
 		fOpponentModel = new BayesianOpponentModel(utilitySpace);
 	}
 	
-	private void appraise() {
+	private void appraise() throws Exception {
 		
-		System.out.println("Expressed Emotion: " + Emotions.SAD);
-		
-		System.out.println("Expressed Emotion: " + Emotions.HAPPY);
+		if(appraisal.isDesirable(utilitySpace, fOpponentModel, opponentLastBid, EvaluationType.FAIR, 0.5))
+			System.out.println("+++++ Expressed Emotion: " + Emotions.HAPPY);
+		else
+			System.out.println("+++++ Expressed Emotion: " + Emotions.SAD);
 	}
 	
 	private Action proposeInitialBid() throws Exception {
 		Bid lBid = null;
 		lBid = utilitySpace.getMaxUtilityBid();
-		updateSelfLastOffer(lBid);
 		return new Offer(getAgentID(), lBid);
 	}
 	
@@ -144,14 +135,12 @@ public class AffectiveAgent extends Agent
 		{
 			try { 
 				
-				System.out.println("Affective Agent >>> Opponent's Bid: " + ((Offer)opponentAction).getBid());
-				System.out.println("Affective Agent >>> Utility of Opponent's Bid: " + utilitySpace.getUtility(((Offer)opponentAction).getBid()));
+				System.out.println("Affective Agent >>> Opponent's Bid: " + ((Offer)opponentAction).getBid() + " , Utility of Opponent's Bid: " + utilitySpace.getUtility(((Offer)opponentAction).getBid()));
 				
 				opponentLastBid = ((Offer)opponentAction).getBid();
+				opponentBidHistory.add(opponentLastBid);
 				
-				updateOpponentLastOffer(opponentLastBid);
-				
-				opponentBidHistory.add(((Offer)opponentAction).getBid());
+				appraise();
 				
 			} catch(Exception e) {
 				e.printStackTrace();
@@ -159,62 +148,75 @@ public class AffectiveAgent extends Agent
 		}
 	}
 	
-	private Bid getNextBid(Bid pOppntBid) throws Exception {
-		Bid lBid = null;
-		lBid = utilitySpace.getMaxUtilityBid(); // This can be min or max depending on the strategy!
-		selfLastBid = lBid;
-		return lBid;
+	private Bid getNextBid(Bid opponentBid, double acceptableUtilityDistanceThreshold) throws Exception {
+//		Bid lBid = null;
+//		lBid = utilitySpace.getMaxUtilityBid(); // This can be min or max depending on the strategy!
+//		selfLastBid = lBid;
+//		return lBid;
+		
+		BidIterator bidit = new BidIterator(utilitySpace.getDomain());
+
+		if (!bidit.hasNext())
+			throw new Exception("The domain does not contain any bids!");
+		
+		while (bidit.hasNext()) {
+			Bid thisBid = bidit.next();
+			if (getUtility(thisBid) - getUtility(opponentBid) >= acceptableUtilityDistanceThreshold) {
+				return thisBid;
+			}
+		}
+		
+		return null;
 	}
 	
 	public Action chooseAction()
 	{
 		Action action = null;
-		Bid opponentBid = null;
 
 		setTurnCount(++turnCount);
 		
 		try {
-			opponentBid = ((Offer) actionOfPartner).getBid();
-
-			// Check if action type is Offer and not accept! --> Do this before calling this function. 
-			
 			if (selfLastAction == null)
-				action = proposeInitialBid();
+				action = proposeInitialBid(); // This shouldn't be max bid. It should be something in between!
 			else {
-				double offeredUtility = utilitySpace.getUtility(opponentBid);
+				if(actionOfPartner instanceof Offer)
+				{
+					Bid opponentBid = ((Offer) actionOfPartner).getBid();
+					
+					double offeredUtility = utilitySpace.getUtility(opponentBid);
 				
-				double time = timeline.getTime();
+					double time = timeline.getTime();
 				
-				if (isAcceptable(offeredUtility, time)) {
-					action = new Accept(getAgentID()); // opponent's bid higher than util of my last bid! accepted
-				} 
-				else {
-					Bid lnextBid = getNextBid(opponentBid); // Be careful about null bids. 
+					if (isAcceptable(offeredUtility, time))
+						action = new Accept(getAgentID());
+					else {
+						Bid lnextBid = getNextBid(opponentBid, 0.05); 
 
-//					if (lnextBid == null)
-//						lnextBid = myPreviousBids.get(myPreviousBids.size() - 1);
-					
-					updateSelfLastOffer(lnextBid);
-					
-					action = new Offer(getAgentID(), lnextBid);
+						if (lnextBid == null)
+						{
+							System.out.println("Could not make an acceptable offer!");
+							action = new EndNegotiation();
+							return action;
+						}
+						else
+							action = new Offer(getAgentID(), lnextBid);
+					}
 				}
 			}
 			
+			selfLastAction = action;
+			
+			if (action instanceof Offer) selfBidHistory.add(((Offer)action).getBid());
+			
 			opponentLastAction = actionOfPartner;
+			
+			if (timeline.getType().equals(Timeline.Type.Time)) {
+				sleep(0.005);
+			}
 			
 		} catch (Exception e) {
 			System.out.println("Exception in chooseAction:" + e.getMessage());
 			e.printStackTrace();
-			action = new Offer(getAgentID(), selfLastBid); // Check whether self last bid gets updated properly.
-		}
-		
-		selfLastAction = action;
-		
-		if (action instanceof Offer) selfBidHistory.add(((Offer)action).getBid());
-		
-		if (selfLastAction instanceof Offer) {
-			myPreviousBids.add(((Offer) selfLastAction).getBid());
-			selfLastBid = ((Offer) selfLastAction).getBid();
 		}
 		
 		return action;
@@ -285,14 +287,6 @@ public class AffectiveAgent extends Agent
 	
 	private void updateTotalOffersCount() {
 		totalOffersCountAgentA.add(selfBidHistory.get(selfBidHistory.size()-1).getIssues().size());
-	}
-	
-	private void updateOpponentLastOffer(Bid opponentLastOffer) {
-		this.opponentLastOffer = opponentLastOffer;
-	}
-	
-	private void updateSelfLastOffer(Bid selfLastOffer) {
-		this.selfLastOffer = selfLastOffer;
 	}
 	
 	public int getTurnCount() {
