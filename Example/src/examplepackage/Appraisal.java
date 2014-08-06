@@ -138,6 +138,11 @@ public class Appraisal extends AffectiveAgent{
 		
 		if (Math.log(1 + getMaxHistoryUtility(utilSpace, bidHistory) - utilSpace.getUtility(bidHistory.get(bidHistory.size()-1))) >= thresholdValue) return true; else return false;
 	}
+	
+	public boolean isUnexpected(double thresholdValue, List<Bid> bidHistory, UtilitySpace utilSpace) throws Exception {
+		
+		if ((1 - utilSpace.getUtility(bidHistory.get(bidHistory.size()-1))) >= thresholdValue) return true; else return false;
+	}
 
 	public boolean isTemporalStatusFuture(UtilitySpace utilSpace, List<Bid> bidHistory, BayesianOpponentModel opponentModel, long time, double rSquaredThresholdValue, double acceptableDistanceToAspirationValue) throws Exception {
 

@@ -144,8 +144,16 @@ public class AffectiveAgent extends Agent
 				opponentLastBid = ((Offer)opponentAction).getBid();
 				opponentBidHistory.add(opponentLastBid);
 				
-				appraise();
+				//System.out.println("+++++++++++ Expected Utility: " + fOpponentModel.getExpectedUtility(opponentLastBid));
+				//System.out.println("Have seen before: " + fOpponentModel.haveSeenBefore(opponentLastBid));
+				System.out.println(fOpponentModel.fBiddingHistory);
 				
+				fOpponentModel.updateBeliefs(opponentLastBid);
+				
+				System.out.println(fOpponentModel.fBiddingHistory);
+				
+				appraise();
+
 			} catch(Exception e) {
 				e.printStackTrace();
 			}
