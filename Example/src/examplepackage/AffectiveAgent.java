@@ -41,13 +41,13 @@ public class AffectiveAgent extends Agent
 	private ArrayList<Integer> totalOffersCountAgentB    = new ArrayList<Integer>();
 	
 	private Bid opponentLastBid = null;
-	private Bid selfLastBid     = null;
+//	private Bid selfLastBid     = null;
 	
 	private AgentLabel agentLabel;
 	
 	private BayesianOpponentModel fOpponentModel;
 	
-	private ArrayList<Bid> myPreviousBids;
+//	private ArrayList<Bid> myPreviousBids;
 	
 	private Action actionOfPartner=null;
 	
@@ -111,10 +111,10 @@ public class AffectiveAgent extends Agent
 //		else
 //			System.out.println("+++++ Expressed Emotion: " + Emotions.SAD);
 		
-		if (appraisal.isControllable(utilitySpace, opponentLastBid, 0.8, 0.1, 180, 0.1, 0.5))
-			System.out.println("+++++ Expressed Emotion: " + Emotions.WORRIEDNESS);
-		else
+		if (appraisal.isControllable(utilitySpace, opponentBidHistory, opponentLastBid, 0.8, 0.1, 180, 0.1, 0.5))
 			System.out.println("+++++ Expressed Emotion: " + Emotions.HOPE);
+		else
+			System.out.println("+++++ Expressed Emotion: " + Emotions.WORRIEDNESS);
 	}
 	
 	private Action proposeInitialBid() throws Exception {
@@ -211,7 +211,8 @@ public class AffectiveAgent extends Agent
 			
 			selfLastAction = action;
 			
-			if (action instanceof Offer) selfBidHistory.add(((Offer)action).getBid());
+			if (action instanceof Offer)
+				selfBidHistory.add(((Offer)action).getBid());
 			
 			opponentLastAction = actionOfPartner;
 			
@@ -272,7 +273,7 @@ public class AffectiveAgent extends Agent
 		return -1;
 	}
 	
-	private void updateAcceptedOffersCount() throws Exception {
+	public void updateAcceptedOffersCount() throws Exception {
 		
 		int counter = 0;
 		
@@ -290,12 +291,13 @@ public class AffectiveAgent extends Agent
 		acceptedOffersCount.add(counter);
 	}
 	
-	private void updateTotalOffersCount() {
+	public void updateTotalOffersCount() {
 		totalOffersCountAgentA.add(selfBidHistory.get(selfBidHistory.size()-1).getIssues().size());
 	}
 	
 	public int getTurnCount() {
-		return this.turnCount/2;
+		//return this.turnCount/2;
+		return opponentBidHistory.size();
 	}
 	
 	private void setTurnCount(int turnCount) {
