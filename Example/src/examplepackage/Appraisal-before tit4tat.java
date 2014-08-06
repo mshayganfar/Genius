@@ -21,6 +21,7 @@ import examplepackage.AffectiveAgent;
 public class Appraisal extends AffectiveAgent{
 	
 	private long startingTime = 0;
+//	private long elapsedTime  = 0;
 	
 	private double rSquared = 0.0;
 	
