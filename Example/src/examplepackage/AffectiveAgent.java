@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
 import agents.bayesianopponentmodel.BayesianOpponentModel;
 import negotiator.Agent;
 import negotiator.AgentID;
@@ -37,17 +36,14 @@ public class AffectiveAgent extends Agent
 	
 	private ArrayList<Integer> acceptedOffersCount = new ArrayList<Integer>();
 	
-	private ArrayList<Integer> totalOffersCountAgentA    = new ArrayList<Integer>();
-	private ArrayList<Integer> totalOffersCountAgentB    = new ArrayList<Integer>();
+	private ArrayList<Integer> totalOffersCountAgentA = new ArrayList<Integer>();
+	private ArrayList<Integer> totalOffersCountAgentB = new ArrayList<Integer>();
 	
 	private Bid opponentLastBid = null;
-//	private Bid selfLastBid     = null;
 	
 	private AgentLabel agentLabel;
 	
 	private BayesianOpponentModel fOpponentModel;
-	
-//	private ArrayList<Bid> myPreviousBids;
 	
 	private Action actionOfPartner=null;
 	
@@ -111,10 +107,13 @@ public class AffectiveAgent extends Agent
 //		else
 //			System.out.println("+++++ Expressed Emotion: " + Emotions.SAD);
 		
-		if (appraisal.isControllable(utilitySpace, opponentBidHistory, opponentLastBid, 0.8, 0.1, 180, 0.1, 0.5))
-			System.out.println("+++++ Expressed Emotion: " + Emotions.HOPE);
-		else
-			System.out.println("+++++ Expressed Emotion: " + Emotions.WORRIEDNESS);
+//		if (appraisal.isControllable(utilitySpace, opponentBidHistory, opponentLastBid, 0.8, 0.1, 180, 0.1, 0.5))
+//			System.out.println("+++++ Expressed Emotion: " + Emotions.HOPE);
+//		else
+//			System.out.println("+++++ Expressed Emotion: " + Emotions.WORRIEDNESS);
+		
+		if (!appraisal.isUnexpected(utilitySpace, opponentBidHistory, 0.5))
+			System.out.println("+++++ Expressed Emotion: " + Emotions.SURPRISE);
 	}
 	
 	private Action proposeInitialBid() throws Exception {

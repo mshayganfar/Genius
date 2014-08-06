@@ -126,26 +126,27 @@ public class Appraisal extends AffectiveAgent{
 		return false;
 	}
 	
-	public boolean isUnexpected(Bid opponentLastBid, double thresholdValue) throws Exception {
+	// This method is not debugged yet!
+	public boolean isUnexpected(Bid opponentLastBid, double thresholdValue) throws Exception { 
 		
 		updateUserModelProbabilities(opponentLastBid);
 
 		if (getUserModelDistance() <= thresholdValue) return false; else return true;
 	}
 	
-	public boolean isUnexpected(double thresholdValue) throws Exception {
+	public boolean isUnexpected(UtilitySpace utilSpace, List<Bid> bidHistory, double thresholdValue) throws Exception {
 		
-		if (Math.log(1 + getMaxHistoryUtility() - getUtility(opponentBidHistory.get(opponentBidHistory.size()-1))) >= thresholdValue) return true; else return false;
+		if (Math.log(1 + getMaxHistoryUtility(utilSpace, bidHistory) - utilSpace.getUtility(bidHistory.get(bidHistory.size()-1))) >= thresholdValue) return true; else return false;
 	}
 
 	public boolean isTemporalStatusFuture(UtilitySpace utilSpace, List<Bid> bidHistory, BayesianOpponentModel opponentModel, long time, double rSquaredThresholdValue, double acceptableDistanceToAspirationValue) throws Exception {
-		
+
 		computeLinearRegression(utilSpace, bidHistory);
-		
+
 		if (getrSquaredValue() >= rSquaredThresholdValue)
 			if(estimateUtilityDistanceToAspirationValueAtTime(utilSpace, time) <= acceptableDistanceToAspirationValue)
 				return true;
-		
+
 		return false;
 	}
 	
@@ -517,13 +518,13 @@ public class Appraisal extends AffectiveAgent{
 		}
 	}
 	
-	private double getMaxHistoryUtility() {
+	private double getMaxHistoryUtility(UtilitySpace utilSpace, List<Bid> bidHistory) throws Exception {
 		
 		double maxUtility = 0.0;
 		
-		for (int i = 0 ; i < opponentBidHistory.size() ; i++)
-			if (maxUtility < getUtility(opponentBidHistory.get(i)))
-				maxUtility = getUtility(opponentBidHistory.get(i));
+		for (int i = 0 ; i < bidHistory.size() ; i++)
+			if (maxUtility < utilSpace.getUtility(bidHistory.get(i)))
+				maxUtility = utilSpace.getUtility(bidHistory.get(i));
 		
 		return maxUtility;
 	}
