@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+
 import negotiator.AgentID;
 import negotiator.Bid;
 import negotiator.BidIterator;
@@ -38,9 +39,6 @@ public class AffectiveAgent extends BilateralAgent
 	public enum AgentLabel {A, B};
 	public enum EvaluationType {BATNA, FAIR, MAX};
 	
-	public List<Bid> opponentBidHistory;
-	public List<Bid> selfBidHistory;
-	
 	private ArrayList<Integer> acceptedOffersCount = new ArrayList<Integer>();
 	
 	private ArrayList<Integer> totalOffersCountAgentA = new ArrayList<Integer>();
@@ -72,9 +70,6 @@ public class AffectiveAgent extends BilateralAgent
 			random100 = new Random();
 		}
 		log("Domain size: " + DOMAINSIZE);
-		
-		opponentBidHistory = new ArrayList<Bid>();
-		selfBidHistory = new ArrayList<Bid>();
 		
 		String agentID = readAgentLabel();
 		if(!agentID.equals(null)) setAgentID(new AgentID(agentID));
@@ -652,15 +647,13 @@ public class AffectiveAgent extends BilateralAgent
 	public void updateAcceptedOffersCount() throws Exception {
 		
 		int counter = 0;
-		
-		for(int i = 1 ; i <= opponentBidHistory.get(opponentBidHistory.size()-1).getIssues().size() ; i++)
+
+		for(int i = 1 ; i <= opponentHistory.getLastBid().getIssues().size() ; i++)
 		{
 			for(int j = 1 ; j <= selfBidHistory.get(selfBidHistory.size()-1).getIssues().size() ; j++)
 			{
-				if(opponentBidHistory.get(opponentBidHistory.size()-1).getValue(i).equals(selfBidHistory.get(selfBidHistory.size()-1).getValue(j)))
-				{
+				if (opponentHistory.getLastBid().getValue(i).equals(selfBidHistory.get(selfBidHistory.size()-1).getValue(j)))
 					counter++;
-				}
 			}
 		}
 		
@@ -672,7 +665,7 @@ public class AffectiveAgent extends BilateralAgent
 	}
 	
 	public int getTurnCount() {
-		return opponentBidHistory.size();
+		return opponentHistory.size();
 	}
 	
 //	public BayesianOpponentModel getOpponentModel() {

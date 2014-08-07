@@ -65,10 +65,13 @@ public class Appraisal extends AffectiveAgent{
 		return false;
 	}
 	
-	private boolean isControllable(UtilitySpace utilSpace, List<Bid> bidHistory, Bid opponentLastBid, double dValue, double thresholdValue) throws Exception {
+	// This method is being used whenever the corresponding R-Squared value of the regression line is invalid (less than 80%).
+	// The mathematical notion of this method is provided in documents. It includes an exponential weighting of the average accepted over total offers
+	// have been made to the opponent. It also include a discount factor of the time pressure, and the distance of the opponent's last offer to aspiration value. 
+	private boolean isControllable(UtilitySpace utilSpace, BidHistory opponentHistory, double dValue, double thresholdValue) throws Exception {
 		
 		int i = 0;
-		int turnCount = bidHistory.size(); // Or implement getTurnCount()!
+		int turnCount = opponentHistory.size();// Or implement getTurnCount()!
 		
 		double accDenom = 0.0;
 		double weight = 0.0;
@@ -89,7 +92,7 @@ public class Appraisal extends AffectiveAgent{
 				numerator += weight*((getTotalOffersCount(i) != 0) ? (getAcceptedOffersCount(i)/getTotalOffersCount(i)) : 0.5); 
 			}
 			
-			controllabilityResult = ((double)numerator/(turnCount*Math.pow(turnCount, dValue))) + getAlphaValue(utilSpace, opponentLastBid);
+			controllabilityResult = ((double)numerator/(turnCount*Math.pow(turnCount, dValue))) + getAlphaValue(utilSpace, opponentHistory.getLastBid());
 			
 			System.out.println("++++++ Controllability Value: " + controllabilityResult);
 			
@@ -106,9 +109,11 @@ public class Appraisal extends AffectiveAgent{
 		if((utilSpace.getUtility(utilSpace.getMaxUtilityBid()) - thresholdValue) < utilSpace.getUtility(opponentLastBid)) return true; else return false;
 	}
 	
-	private int isControllable(UtilitySpace utilSpace, List<Bid> bidHistory, double regressionValidityThreshold, double distanceToAspirationThreshold, long time) throws Exception {
+	// This method is implemented to compute controllability of an event (new offer) using a linear regression line in the given time. 
+	// It returns -1 if the R-Squared value is less than regression validity threshold, e.g. 80%.
+	private int isControllable(UtilitySpace utilSpace, BidHistory opponentHistory, double regressionValidityThreshold, double distanceToAspirationThreshold, long time) throws Exception {
 		
-		computeLinearRegression(utilSpace, bidHistory);
+		computeLinearRegression(utilSpace, opponentHistory);
 		
 		if(getrSquaredValue() >= regressionValidityThreshold)
 			if (estimateUtilityDistanceToAspirationValueAtTime(utilSpace, time) > distanceToAspirationThreshold) return 0; else return 1; 
@@ -118,16 +123,16 @@ public class Appraisal extends AffectiveAgent{
 		return -1;
 	}
 	
-	public boolean isControllable(UtilitySpace utilSpace, List<Bid> bidHistory, Bid opponentLastBid, double regressionValidityThreshold, double distanceToAspirationRegressionThreshold, long desiredNegotiationEndingTime, double dTimeGrowthValue, double nonRegressionContrallabilityThresholdValue) throws Exception {
+	public boolean isControllable(UtilitySpace utilSpace, BidHistory opponentHistory, double regressionValidityThreshold, double distanceToAspirationRegressionThreshold, long desiredNegotiationEndingTime, double dTimeGrowthValue, double nonRegressionContrallabilityThresholdValue) throws Exception {
 		
-		double contrllability = isControllable(utilSpace, bidHistory, regressionValidityThreshold, distanceToAspirationRegressionThreshold, desiredNegotiationEndingTime);
+		double contrllability = isControllable(utilSpace, opponentHistory, regressionValidityThreshold, distanceToAspirationRegressionThreshold, desiredNegotiationEndingTime);
 		
 		if(contrllability != -1)
 		{
 			if (contrllability == 0) return false;
 			else if (contrllability == 1) return true;
 		}
-		else if (isControllable(utilSpace, bidHistory, opponentLastBid, dTimeGrowthValue, nonRegressionContrallabilityThresholdValue)) return true;
+		else if (isControllable(utilSpace, opponentHistory, dTimeGrowthValue, nonRegressionContrallabilityThresholdValue)) return true;
 		
 		return false;
 	}
@@ -150,9 +155,9 @@ public class Appraisal extends AffectiveAgent{
 		if ((1 - utilSpace.getUtility(bidHistory.get(bidHistory.size()-1))) >= thresholdValue) return true; else return false;
 	}
 
-	public boolean isTemporalStatusFuture(UtilitySpace utilSpace, List<Bid> bidHistory, BayesianOpponentModel opponentModel, long time, double rSquaredThresholdValue, double acceptableDistanceToAspirationValue) throws Exception {
+	public boolean isTemporalStatusFuture(UtilitySpace utilSpace, BidHistory opponentHistory, BayesianOpponentModel opponentModel, long time, double rSquaredThresholdValue, double acceptableDistanceToAspirationValue) throws Exception {
 
-		computeLinearRegression(utilSpace, bidHistory);
+		computeLinearRegression(utilSpace, opponentHistory);
 
 		if (getrSquaredValue() >= rSquaredThresholdValue)
 			if(estimateUtilityDistanceToAspirationValueAtTime(utilSpace, time) <= acceptableDistanceToAspirationValue)
@@ -446,15 +451,15 @@ public class Appraisal extends AffectiveAgent{
 		return Math.sqrt(sum);
 	}
 	
-	private void computeLinearRegression(UtilitySpace utilSpace, List<Bid> bidHistory) throws Exception {
+	private void computeLinearRegression(UtilitySpace utilSpace, BidHistory opponentHistory) throws Exception {
         
 		int n = 1;
 
         double opponentBidUtility;
         double sumx = 0.0, sumy = 0.0, sumx2 = 0.0;
         
-        while(bidHistory.size() >= n) {
-            opponentBidUtility = utilSpace.getUtility(bidHistory.get(n-1));
+        while(opponentHistory.size() >= n) {
+            opponentBidUtility = utilSpace.getUtility(opponentHistory.getHistory().get(n-1).getBid());
         	sumx  += opponentBidUtility;
             sumx2 += opponentBidUtility * opponentBidUtility;
             sumy  += n;
@@ -467,7 +472,7 @@ public class Appraisal extends AffectiveAgent{
         double xxbar = 0.0, yybar = 0.0, xybar = 0.0;
         
         for (int i = 1 ; i < n ; i++) {
-        	opponentBidUtility = utilSpace.getUtility(bidHistory.get(i-1));
+        	opponentBidUtility = utilSpace.getUtility(opponentHistory.getHistory().get(i-1).getBid());
             xxbar += (opponentBidUtility - xbar) * (opponentBidUtility - xbar);
             yybar += (i - ybar) * (i - ybar);
             xybar += (opponentBidUtility - xbar) * (i - ybar);
@@ -481,7 +486,7 @@ public class Appraisal extends AffectiveAgent{
         double ssr = 0.0;
         
         for (int i = 0 ; i < n-1 ; i++) {
-            double fit = beta1 * utilSpace.getUtility(bidHistory.get(i)) + beta0;
+            double fit = beta1 * utilSpace.getUtility(opponentHistory.getHistory().get(i).getBid()) + beta0;
             ssr += (fit - ybar) * (fit - ybar);
         }
         

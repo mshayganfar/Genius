@@ -1,5 +1,8 @@
 package examplepackage;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import agents.bayesianopponentmodel.BayesianOpponentModel;
 import negotiator.Agent;
 import negotiator.Bid;
@@ -23,12 +26,14 @@ public abstract class BilateralAgent extends Agent implements BidHistoryKeeper {
 	protected BidHistory myHistory;
 	protected BidHistory opponentHistory;
 	protected BayesianOpponentModel fOpponentModel;
+	protected List<Bid> selfBidHistory;
 
 	public void init() {
 		appraisal = new Appraisal();
 		domain = utilitySpace.getDomain();
 		myHistory = new BidHistory();
 		opponentHistory = new BidHistory();
+		selfBidHistory = new ArrayList<Bid>();
 	}
 
 	@Override
