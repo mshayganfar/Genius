@@ -14,12 +14,15 @@ import negotiator.bidding.BidDetails;
  */
 public abstract class BilateralAgent extends Agent implements BidHistoryKeeper {
 	private static final boolean LOGGING = false;
-	protected Domain domain;
+	private Appraisal appraisal;
 	private Action opponentAction;
+	
+	protected Domain domain;
 	protected BidHistory myHistory;
 	protected BidHistory opponentHistory;
 
 	public void init() {
+		appraisal = new Appraisal();
 		domain = utilitySpace.getDomain();
 		myHistory = new BidHistory();
 		opponentHistory = new BidHistory();
@@ -37,9 +40,14 @@ public abstract class BilateralAgent extends Agent implements BidHistoryKeeper {
 			Bid bid = ((Offer) opponentAction).getBid();
 			double time = timeline.getTime();
 			double myUndiscountedUtility = getUndiscountedUtility(bid);
-			BidDetails bidDetails = new BidDetails(bid, myUndiscountedUtility,
-					time);
+			BidDetails bidDetails = new BidDetails(bid, myUndiscountedUtility, time);
 			opponentHistory.add(bidDetails);
+			
+			try {
+				//appraisal.appraise();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
