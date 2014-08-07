@@ -1,5 +1,6 @@
 package examplepackage;
 
+import agents.bayesianopponentmodel.BayesianOpponentModel;
 import negotiator.Agent;
 import negotiator.Bid;
 import negotiator.Domain;
@@ -11,6 +12,7 @@ import negotiator.bidding.BidDetails;
 /**
  * @author Tim Baarslag Agent skeleton for a bilateral agent. It contains
  *         service functions to have access to the bidding history.
+ * @author Mohammad Shayaganfar added affective appraisal.
  */
 public abstract class BilateralAgent extends Agent implements BidHistoryKeeper {
 	private static final boolean LOGGING = false;
@@ -20,6 +22,7 @@ public abstract class BilateralAgent extends Agent implements BidHistoryKeeper {
 	protected Domain domain;
 	protected BidHistory myHistory;
 	protected BidHistory opponentHistory;
+	protected BayesianOpponentModel fOpponentModel;
 
 	public void init() {
 		appraisal = new Appraisal();
@@ -47,7 +50,7 @@ public abstract class BilateralAgent extends Agent implements BidHistoryKeeper {
 			opponentHistory.add(bidDetails);
 
 			try {
-				//appraisal.appraise();
+				appraisal.appraise(opponentHistory, fOpponentModel);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

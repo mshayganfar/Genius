@@ -48,8 +48,6 @@ public class AffectiveAgent extends BilateralAgent
 	
 	private AgentLabel agentLabel;
 	
-	private BayesianOpponentModel fOpponentModel;
-	
 	private long DOMAINSIZE;
 	
 	private final boolean TEST_EQUIVALENCE = false;
@@ -676,4 +674,8 @@ public class AffectiveAgent extends BilateralAgent
 	public int getTurnCount() {
 		return opponentBidHistory.size();
 	}
+	
+//	public BayesianOpponentModel getOpponentModel() {
+//		return fOpponentModel;
+//	}
 }

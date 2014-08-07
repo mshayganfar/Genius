@@ -41,23 +41,28 @@ public class Appraisal extends AffectiveAgent{
 	
 	private Intentionality intenStatus = Intentionality.INTENTIONAL;
 	
-	public boolean isDesirable(UtilitySpace utilSpace, BayesianOpponentModel opponentModel, Bid opponentLastBid, EvaluationType evalType, double threshold) throws Exception {
+	public boolean isDesirable(UtilitySpace utilSpace, BidHistory opponentHistory, BayesianOpponentModel opponentModel, EvaluationType evalType, double threshold) throws Exception {
 		
-		//BidSpace bs = new BidSpace(utilitySpace, new OpponentModelUtilSpace(opponentModel), false, true);
-		//double obtainedUtility = bs.ourUtilityOnPareto(opponentModel.getNormalizedUtility(opponentLastBid));
-		System.out.println("BATNA: " + utilSpace.getReservationValueUndiscounted());
-		switch (evalType)
-		{
-			case BATNA:
-				if ((utilSpace.getUtility(opponentLastBid) - utilSpace.getReservationValueUndiscounted()) >= threshold) return true; else return false;
-			case MAX:
-				if ((utilSpace.getUtility(utilSpace.getMaxUtilityBid()) - utilSpace.getUtility(opponentLastBid)) <= threshold) return true; else return false;
-			case FAIR:
-				if ((utilSpace.getUtility(opponentLastBid) - getFairUtilityOnPareto(utilSpace, new BidSpace(utilSpace, new OpponentModelUtilSpace(opponentModel), false, true), getFairnessType())) >= threshold) return true; else return false;
-			default:
-				System.out.println("Appraisal--Desirability Failed!");
-				return false;
+		Bid opponentLastBid = opponentHistory.getLastBid();
+		
+		if (opponentLastBid != null) {
+			switch (evalType)
+			{
+				case BATNA:
+					if ((utilSpace.getUtility(opponentLastBid) - utilSpace.getReservationValueUndiscounted()) >= threshold) return true; else return false;
+				case MAX:
+					if ((utilSpace.getUtility(utilSpace.getMaxUtilityBid()) - utilSpace.getUtility(opponentLastBid)) <= threshold) return true; else return false;
+				case FAIR:
+					if ((utilSpace.getUtility(opponentLastBid) - getFairUtilityOnPareto(utilSpace, new BidSpace(utilSpace, new OpponentModelUtilSpace(opponentModel), false, true), getFairnessType())) >= threshold) return true; else return false;
+				default:
+					System.out.println("Appraisal--Desirability Failed!");
+					return false;
+			}
 		}
+		else
+			System.out.println("Error Desirability: Opponent's last bid value is null!");
+		
+		return false;
 	}
 	
 	private boolean isControllable(UtilitySpace utilSpace, List<Bid> bidHistory, Bid opponentLastBid, double dValue, double thresholdValue) throws Exception {
@@ -94,9 +99,11 @@ public class Appraisal extends AffectiveAgent{
 		return true; // In the very first step there is hope no matter what! 
 	}
 	
-	private boolean isControllable(Bid opponentLastBid, double thresholdValue) throws Exception {
+	// This is a simple method to check the controllability of an event just based on the comparison of the utility of the opponent's last bid
+	// and the max (aspiration) utility value.
+	private boolean isControllable(UtilitySpace utilSpace, Bid opponentLastBid, double thresholdValue) throws Exception {
 		
-		if((getUtility(utilitySpace.getMaxUtilityBid()) - thresholdValue) < getUtility(opponentLastBid)) return true; else return false;
+		if((utilSpace.getUtility(utilSpace.getMaxUtilityBid()) - thresholdValue) < utilSpace.getUtility(opponentLastBid)) return true; else return false;
 	}
 	
 	private int isControllable(UtilitySpace utilSpace, List<Bid> bidHistory, double regressionValidityThreshold, double distanceToAspirationThreshold, long time) throws Exception {
@@ -543,19 +550,19 @@ public class Appraisal extends AffectiveAgent{
 			return 1.0;
 	}
 	
-	public void appraise() throws Exception {
+	public void appraise(BidHistory opponentHistory, BayesianOpponentModel fOpponentModel) throws Exception {
 		
-//		if(appraisal.isDesirable(utilitySpace, fOpponentModel, opponentLastBid, EvaluationType.FAIR, 0.5))
-//			System.out.println("+++++ Expressed Emotion: " + Emotions.HAPPY);
-//		else
-//			System.out.println("+++++ Expressed Emotion: " + Emotions.SAD);
+		if(isDesirable(utilitySpace, opponentHistory, fOpponentModel, EvaluationType.FAIR, 0.5))
+			System.out.println("+++++ Expressed Emotion: " + Emotions.HAPPY);
+		else
+			System.out.println("+++++ Expressed Emotion: " + Emotions.SAD);
 		
 //		if (appraisal.isControllable(utilitySpace, opponentBidHistory, opponentLastBid, 0.8, 0.1, 180, 0.1, 0.5))
 //			System.out.println("+++++ Expressed Emotion: " + Emotions.HOPE);
 //		else
 //			System.out.println("+++++ Expressed Emotion: " + Emotions.WORRIEDNESS);
 		
-		if (!isUnexpected(utilitySpace, opponentBidHistory, 0.5))
-			System.out.println("+++++ Expressed Emotion: " + Emotions.SURPRISE);
+//		if (!isUnexpected(utilitySpace, opponentBidHistory, 0.5))
+//			System.out.println("+++++ Expressed Emotion: " + Emotions.SURPRISE);
 	}
 }
