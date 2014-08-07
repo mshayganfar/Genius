@@ -15,13 +15,12 @@ import negotiator.actions.Offer;
 import negotiator.analysis.BidPoint;
 import negotiator.analysis.BidSpace;
 import negotiator.bidding.BidDetails;
-import examplepackage.Appraisal;
 import agents.bayesianopponentmodel.BayesianOpponentModel;
 import agents.bayesianopponentmodel.OpponentModelUtilSpace;
 
 /**
- * @author Mohammad Shayganfar
- * Some improvements over the standard SimpleAgent.
+ * @author Originally written by Tim Baarslag
+ * @author Updated and used for affective appraisal by Mohammad Shayganfar
  * 
  * Nice Tit-For-Tat, Affective Intelligence Agent
  */
@@ -39,9 +38,6 @@ public class AffectiveAgent extends BilateralAgent
 	public enum AgentLabel {A, B};
 	public enum EvaluationType {BATNA, FAIR, MAX};
 	
-//	private Action opponentLastAction = null;
-//	private Action selfLastAction  = null;
-	
 	public List<Bid> opponentBidHistory;
 	public List<Bid> selfBidHistory;
 	
@@ -50,15 +46,9 @@ public class AffectiveAgent extends BilateralAgent
 	private ArrayList<Integer> totalOffersCountAgentA = new ArrayList<Integer>();
 	private ArrayList<Integer> totalOffersCountAgentB = new ArrayList<Integer>();
 	
-//	private Bid opponentLastBid = null;
-	
 	private AgentLabel agentLabel;
 	
 	private BayesianOpponentModel fOpponentModel;
-	
-//	private Action actionOfPartner=null;
-	
-//	private int turnCount = 0;
 	
 	private long DOMAINSIZE;
 	
@@ -643,169 +633,12 @@ public class AffectiveAgent extends BilateralAgent
 		fOpponentModel = new BayesianOpponentModel(utilitySpace);
 	}
 	
-//	private Action proposeInitialBid() throws Exception {
-//		Bid lBid = null;
-//		lBid = utilitySpace.getMaxUtilityBid();
-//		return new Offer(getAgentID(), lBid);
-//	}
-	
-	
-	
 	@Override
-	public String getVersion() { return "3.1"; }
+	public String getVersion() { return "1.0"; }
 	
 	@Override
 	public String getName() { return "Affective Agent";	}
 
-//	public void ReceiveMessage(Action opponentAction) 
-//	{
-//		actionOfPartner = opponentAction;
-//		
-//		if (opponentAction instanceof Offer)
-//		{
-//			try { 
-//				
-//				System.out.println("Affective Agent >>> Opponent's Bid: " + ((Offer)opponentAction).getBid() + " , Utility of Opponent's Bid: " + utilitySpace.getUtility(((Offer)opponentAction).getBid()));
-//				
-//				opponentLastBid = ((Offer)opponentAction).getBid();
-//				opponentBidHistory.add(opponentLastBid);
-//				
-//				//System.out.println("+++++++++++ Expected Utility: " + fOpponentModel.getExpectedUtility(opponentLastBid));
-//				//System.out.println("Have seen before: " + fOpponentModel.haveSeenBefore(opponentLastBid));
-//				System.out.println(fOpponentModel.fBiddingHistory);
-//				
-//				fOpponentModel.updateBeliefs(opponentLastBid);
-//				
-//				System.out.println(fOpponentModel.fBiddingHistory);
-//				
-//				appraise();
-//
-//			} catch(Exception e) {
-//				e.printStackTrace();
-//			}
-//		}
-//	}
-	
-//	private Bid getNextBid(Bid opponentBid, double acceptableUtilityDistanceThreshold) throws Exception {
-////		Bid lBid = null;
-////		lBid = utilitySpace.getMaxUtilityBid(); // This can be min or max depending on the strategy!
-////		selfLastBid = lBid;
-////		return lBid;
-//		
-//		BidIterator bidit = new BidIterator(utilitySpace.getDomain());
-//
-//		if (!bidit.hasNext())
-//			throw new Exception("The domain does not contain any bids!");
-//		
-//		while (bidit.hasNext()) {
-//			Bid thisBid = bidit.next();
-//			if (getUtility(thisBid) - getUtility(opponentBid) >= acceptableUtilityDistanceThreshold) {
-//				return thisBid;
-//			}
-//		}
-//		
-//		return null;
-//	}
-	
-	
-	
-	
-//	public Action chooseAction()
-//	{
-//		Action action = null;
-//
-//		setTurnCount(++turnCount);
-//		
-//		try {
-//			if (selfLastAction == null)
-//				action = proposeInitialBid(); // This shouldn't be max bid. It should be something in between!
-//			else {
-//				if(actionOfPartner instanceof Offer)
-//				{
-//					Bid opponentBid = ((Offer) actionOfPartner).getBid();
-//					
-//					double offeredUtility = utilitySpace.getUtility(opponentBid);
-//				
-//					double time = timeline.getTime();
-//				
-//					if (isAcceptable(offeredUtility, time))
-//						action = new Accept(getAgentID());
-//					else {
-//						Bid lnextBid = getNextBid(opponentBid, 0.05); 
-//
-//						if (lnextBid == null)
-//						{
-//							System.out.println("Could not make an acceptable offer!");
-//							action = new EndNegotiation();
-//							return action;
-//						}
-//						else
-//							action = new Offer(getAgentID(), lnextBid);
-//					}
-//				}
-//			}
-//			
-//			selfLastAction = action;
-//			
-//			if (action instanceof Offer)
-//				selfBidHistory.add(((Offer)action).getBid());
-//			
-//			opponentLastAction = actionOfPartner;
-//			
-//			if (timeline.getType().equals(Timeline.Type.Time)) {
-//				sleep(0.005);
-//			}
-//			
-//		} catch (Exception e) {
-//			System.out.println("Exception in chooseAction:" + e.getMessage());
-//			e.printStackTrace();
-//		}
-//		
-//		return action;
-//	}
-
-	
-	
-	
-//	private boolean isAcceptable(double offeredUtilFromOpponent, double time) throws Exception
-//	{
-//		double P = Paccept(offeredUtilFromOpponent,time);
-//		if (P > Math.random()) // This shouldn't be random!
-//			return true;		
-//		return false;
-//	}
-	
-	
-	
-	
-//	/**
-//	 * This function determines the accept probability for an offer.
-//	 * At t=0 it will prefer high-utility offers.
-//	 * As t gets closer to 1, it will accept lower utility offers with increasing probability.
-//	 * it will never accept offers with utility 0.
-//	 * @param u is the utility 
-//	 * @param t is the time as fraction of the total available time 
-//	 * (t=0 at start, and t=1 at end time)
-//	 * @return the probability of an accept at time t
-//	 * @throws Exception if you use wrong values for u or t.
-//	 * 
-//	 */
-//	double Paccept(double u, double t1) throws Exception
-//	{
-//		double t=t1*t1*t1; // steeper increase when deadline approaches.
-//		if (u<0 || u>1.05) throw new Exception("utility "+u+" outside [0,1]");
-//		// normalization may be slightly off, therefore we have a broad boundary up to 1.05
-//		if (t<0 || t>1) throw new Exception("time "+t+" outside [0,1]");
-//		if (u>1.) u=1;
-//		if (t==0.5) return u;
-//		return (u - 2.*u*t + 2.*(-1. + t + Math.sqrt(sq(-1. + t) + u*(-1. + 2*t))))/(-1. + 2*t);
-//	}
-
-	
-	
-//	double sq(double x) { return x*x; }
-	
-	
 	public int getAcceptedOffersCount(int turnIndex) {
 		return acceptedOffersCount.get(turnIndex);
 	}
@@ -841,11 +674,6 @@ public class AffectiveAgent extends BilateralAgent
 	}
 	
 	public int getTurnCount() {
-		//return this.turnCount/2;
 		return opponentBidHistory.size();
 	}
-	
-//	private void setTurnCount(int turnCount) {
-//		this.turnCount = turnCount;
-//	}
 }
