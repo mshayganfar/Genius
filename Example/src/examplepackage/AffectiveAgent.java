@@ -643,24 +643,6 @@ public class AffectiveAgent extends BilateralAgent
 		fOpponentModel = new BayesianOpponentModel(utilitySpace);
 	}
 	
-//	private void appraise() throws Exception {
-//		
-////		if(appraisal.isDesirable(utilitySpace, fOpponentModel, opponentLastBid, EvaluationType.FAIR, 0.5))
-////			System.out.println("+++++ Expressed Emotion: " + Emotions.HAPPY);
-////		else
-////			System.out.println("+++++ Expressed Emotion: " + Emotions.SAD);
-//		
-////		if (appraisal.isControllable(utilitySpace, opponentBidHistory, opponentLastBid, 0.8, 0.1, 180, 0.1, 0.5))
-////			System.out.println("+++++ Expressed Emotion: " + Emotions.HOPE);
-////		else
-////			System.out.println("+++++ Expressed Emotion: " + Emotions.WORRIEDNESS);
-//		
-//		if (!appraisal.isUnexpected(utilitySpace, opponentBidHistory, 0.5))
-//			System.out.println("+++++ Expressed Emotion: " + Emotions.SURPRISE);
-//	}
-	
-	
-	
 //	private Action proposeInitialBid() throws Exception {
 //		Bid lBid = null;
 //		lBid = utilitySpace.getMaxUtilityBid();
@@ -673,10 +655,7 @@ public class AffectiveAgent extends BilateralAgent
 	public String getVersion() { return "3.1"; }
 	
 	@Override
-	public String getName()
-	{
-		return "Affective Agent";
-	}
+	public String getName() { return "Affective Agent";	}
 
 //	public void ReceiveMessage(Action opponentAction) 
 //	{

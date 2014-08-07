@@ -1,11 +1,10 @@
-package agents.anac.y2011.Nice_Tit_for_Tat;
+package examplepackage;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
-
 import negotiator.Bid;
 import negotiator.BidIterator;
 import negotiator.Domain;

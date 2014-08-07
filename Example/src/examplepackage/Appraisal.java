@@ -2,7 +2,6 @@ package examplepackage;
 
 import java.util.HashMap;
 import java.util.List;
-
 import negotiator.Bid;
 import negotiator.analysis.BidSpace;
 import negotiator.utility.UtilitySpace;

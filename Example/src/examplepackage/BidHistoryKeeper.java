@@ -1,4 +1,4 @@
-package agents.anac.y2011.Nice_Tit_for_Tat;
+package examplepackage;
 
 import negotiator.Bid;
 

@@ -29,20 +29,23 @@ public abstract class BilateralAgent extends Agent implements BidHistoryKeeper {
 	}
 
 	@Override
-	public String getVersion() {
-		return "1.0";
-	}
+	public String getVersion() { return "1.0"; }
 
 	@Override
+	public String getName() { return "Affective Agent";	}
+	
+	@Override
 	public void ReceiveMessage(Action opponentAction) {
+		
 		this.opponentAction = opponentAction;
+		
 		if (opponentAction instanceof Offer) {
 			Bid bid = ((Offer) opponentAction).getBid();
 			double time = timeline.getTime();
 			double myUndiscountedUtility = getUndiscountedUtility(bid);
 			BidDetails bidDetails = new BidDetails(bid, myUndiscountedUtility, time);
 			opponentHistory.add(bidDetails);
-			
+
 			try {
 				//appraisal.appraise();
 			} catch (Exception e) {
@@ -121,8 +124,7 @@ public abstract class BilateralAgent extends Agent implements BidHistoryKeeper {
 			Bid myLastBid = ((Offer) myAction).getBid();
 			double time = timeline.getTime();
 			double myUndiscountedUtility = getUndiscountedUtility(myLastBid);
-			BidDetails bidDetails = new BidDetails(myLastBid,
-					myUndiscountedUtility, time);
+			BidDetails bidDetails = new BidDetails(myLastBid, myUndiscountedUtility, time);
 			myHistory.add(bidDetails);
 		}
 	}
