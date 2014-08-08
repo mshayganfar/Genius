@@ -137,7 +137,7 @@ public class Appraisal extends AffectiveAgent{
 		return false;
 	}
 	
-	// This method is not debugged yet!
+	// This method (and all related ones) is/are not debugged yet!
 	public boolean isUnexpected(Bid opponentLastBid, double thresholdValue) throws Exception { 
 		
 		updateUserModelProbabilities(opponentLastBid);
@@ -145,11 +145,16 @@ public class Appraisal extends AffectiveAgent{
 		if (getUserModelDistance() <= thresholdValue) return false; else return true;
 	}
 	
-	public boolean isUnexpected(UtilitySpace utilSpace, List<Bid> bidHistory, double thresholdValue) throws Exception {
+	// This method is implemented based on the Rainer's "Modeling Forms of Surprise..." paper.
+	// I simply considered opponent new bid as an event. This will be replaced by probability of an offer given the user model. 
+	public boolean isUnexpected(UtilitySpace utilSpace, BidHistory opponentHistory, double thresholdValue) throws Exception {
 		
-		if (Math.log(1 + getMaxHistoryUtility(utilSpace, bidHistory) - utilSpace.getUtility(bidHistory.get(bidHistory.size()-1))) >= thresholdValue) return true; else return false;
+		if (Math.log(1 + getMaxHistoryUtility(utilSpace, opponentHistory) - utilSpace.getUtility(opponentHistory.getLastBid())) >= thresholdValue) return true; else return false;
 	}
 	
+	// This method is implemented based on the Rainer's "Modeling Forms of Surprise..." paper.
+	// This one is even simpler and was suggested by Rainer to us.
+	// I simply considered opponent new bid as an event. This will be replaced by probability of an offer given the user model. 
 	public boolean isUnexpected(double thresholdValue, List<Bid> bidHistory, UtilitySpace utilSpace) throws Exception {
 		
 		if ((1 - utilSpace.getUtility(bidHistory.get(bidHistory.size()-1))) >= thresholdValue) return true; else return false;
@@ -534,13 +539,13 @@ public class Appraisal extends AffectiveAgent{
 		}
 	}
 	
-	private double getMaxHistoryUtility(UtilitySpace utilSpace, List<Bid> bidHistory) throws Exception {
+	private double getMaxHistoryUtility(UtilitySpace utilSpace, BidHistory opponentHistory) throws Exception {
 		
 		double maxUtility = 0.0;
 		
-		for (int i = 0 ; i < bidHistory.size() ; i++)
-			if (maxUtility < utilSpace.getUtility(bidHistory.get(i)))
-				maxUtility = utilSpace.getUtility(bidHistory.get(i));
+		for (int i = 0 ; i < opponentHistory.size() ; i++)
+			if (maxUtility < utilSpace.getUtility(opponentHistory.getHistory().get(i).getBid()))
+				maxUtility = utilSpace.getUtility(opponentHistory.getHistory().get(i).getBid());
 		
 		return maxUtility;
 	}
